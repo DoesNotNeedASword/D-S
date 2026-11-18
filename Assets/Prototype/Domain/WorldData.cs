@@ -1,0 +1,256 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace DungeonsNShops
+{
+    public enum Item { Tonic, Herb, Blade, Shield, Coat, Trap, Greatblade, Ore, Ember, Focus, Boots, Leggings, Helm, Ward }
+    public enum ArmorSlot { Feet, Legs, Torso, Head }
+    public enum DayPhase { Preparation, Trading, Night }
+    public enum NightChoice { Free, Working, Raiding, Sleeping }
+    public enum Zone { Shop, Raid }
+    public enum Site { None, Shelf, Warehouse, Register, Supplier, Bank, Bench, Gate, Bed, Exit, Decor, Sign }
+    public enum CustomerPhase { Walking, Choosing, Checkout, Leaving }
+    public enum CraftStep { Mortar, Cauldron, Stir, Ingredients, Grind }
+    public enum ReagentStage { Tray, Mortar, Ground, Pot }
+    public enum EnemyPhase { Idle, Pursuit, Windup, Recovery, Defeated }
+    public enum ActionKind
+    {
+        Stock, TakeCrate, Retrieve, Price, Open, Sell, Close, Order, Loan, Repay,
+        BeginCraft, CraftZone, Stir, FinishCraft, CancelCraft, Enter, Exit, Sleep, Ready, Select,
+        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient
+    }
+
+    public readonly struct ItemDefinition
+    {
+        public readonly int BaseValue;
+        public readonly int Damage;
+        public readonly bool TwoHanded;
+        public readonly int ShelfSize;
+
+        public ItemDefinition(int value, int damage = 0, bool twoHanded = false, int shelfSize = 1)
+        {
+            BaseValue = value;
+            Damage = damage;
+            TwoHanded = twoHanded;
+            ShelfSize = shelfSize;
+        }
+    }
+
+    public static class Catalog
+    {
+        private static readonly ItemDefinition[] Items =
+        {
+            new(14), new(6), new(24, 24, shelfSize: 4), new(18, shelfSize: 3), new(25, shelfSize: 3),
+            new(12, shelfSize: 2), new(42, 38, true, 6), new(10), new(36), new(24),
+            new(16, shelfSize: 2), new(21, shelfSize: 3), new(19, shelfSize: 2), new(26)
+        };
+
+        public const int Count = 14;
+        public static bool Valid(int item) => item >= 0 && item < Count;
+        public static ItemDefinition Get(int item) => Items[item];
+        public static bool IsIngredient(int item) => item is (int)Item.Herb or (int)Item.Ore or (int)Item.Ember;
+        public static int ArmorPosition(int item) => (Item)item switch
+        {
+            Item.Boots => (int)ArmorSlot.Feet,
+            Item.Leggings => (int)ArmorSlot.Legs,
+            Item.Coat => (int)ArmorSlot.Torso,
+            Item.Helm => (int)ArmorSlot.Head,
+            _ => -1
+        };
+    }
+
+    [Serializable]
+    public sealed class Balance
+    {
+        [Range(0.1f, 4)] public float demandElasticity = 1.6f;
+        [Min(0)] public int dailyTax = 4;
+        [Min(0)] public int loanPayment = 8;
+        [Range(1, 100)] public int shiftEnergy = 12;
+        [Range(1, 100)] public int raidEnergy = 25;
+        [Range(1, 100)] public int sleepEnergy = 60;
+        [Min(1)] public float customerInterval = 9;
+        [Min(1)] public float stirSeconds = 2;
+        [Min(0)] public float gatherSeconds = 120;
+    }
+
+    [Serializable]
+    public sealed class PlayerState
+    {
+        public string id;
+        public bool online;
+        public Zone zone;
+        public NightChoice night;
+        public bool ready;
+        public bool workedShift;
+        public float hp = 100, sp = 100;
+        public int ep = 100;
+        public Vector3 position;
+        public float yaw, pitch;
+        public bool crouched, guarding;
+        public float swing, ward;
+        public int selected = (int)Item.Blade;
+        public int offhand = (int)Item.Shield;
+        public int[] backpack = InventoryLayout.Empty(InventoryLayout.BackpackSize);
+        public int[] hotbar = InventoryLayout.Empty(InventoryLayout.HotbarSize);
+        public int[] equipment = InventoryLayout.Empty(InventoryLayout.ArmorSize);
+        public int[] bag = new int[Catalog.Count];
+        public int[] haul = new int[Catalog.Count];
+        public Crate carriedCrate;
+        public bool crateActive;
+        public long lastOperation;
+        public string notice;
+        public int noticeVersion;
+
+        public bool HoldingCrate => crateActive && carriedCrate?.id > 0;
+        public int Main => !HoldingCrate ? hotbar[selected] : -1;
+        public bool HasShield => !HoldingCrate && offhand == (int)Item.Shield && bag[offhand] > 0 &&
+                                 (Main < 0 || !Catalog.Get(Main).TwoHanded);
+        public bool HasCoat => equipment[(int)ArmorSlot.Torso] == (int)Item.Coat;
+        public float EyeHeight => crouched ? 1.05f : 1.62f;
+    }
+
+    [Serializable]
+    public sealed class Crate
+    {
+        public int id, item, count, unitCost, quality;
+        public int rackSlot = -1;
+    }
+
+    [Serializable]
+    public sealed class PendingDelivery
+    {
+        public Crate crate;
+        public int morning, paid;
+    }
+
+    [Serializable]
+    public sealed class ShopShelf
+    {
+        public const int Capacity = 12;
+        public List<ShelfStock> stock = new();
+        public int Used
+        {
+            get
+            {
+                int used = 0;
+                foreach (ShelfStock line in stock) used += line.count * Catalog.Get(line.item).ShelfSize;
+                return used;
+            }
+        }
+    }
+
+    [Serializable]
+    public sealed class ShelfStock
+    {
+        public int item, count, manualPrice;
+        public bool marketPrice = true;
+    }
+
+    [Serializable]
+    public sealed class PurchaseLine
+    {
+        public int item, count, unitPrice;
+    }
+
+    [Serializable]
+    public sealed class Customer
+    {
+        public int id, archetype, price, collected;
+        public List<PurchaseLine> cart = new();
+        public int[] payment;
+        public CustomerPhase phase;
+        public float remaining;
+    }
+
+    [Serializable]
+    public sealed class CraftEvent
+    {
+        public CraftStep step;
+        public int reagent;
+        public float time;
+    }
+
+    [Serializable]
+    public sealed class ReagentPiece
+    {
+        public int item, presses;
+        public ReagentStage stage;
+        public bool ground;
+        public float nextPress;
+    }
+
+    [Serializable]
+    public sealed class StationSession
+    {
+        public int id;
+        public string owner;
+        public CraftStep step = CraftStep.Ingredients;
+        public float elapsed, stir;
+        public float lastStirSample;
+        public int[] ingredients;
+        public List<ReagentPiece> pieces = new();
+        public System.Collections.Generic.List<CraftEvent> journal = new();
+    }
+
+    [Serializable]
+    public sealed class Enemy
+    {
+        public Vector3 position;
+        public float hp, maxHp, remaining, stun;
+        public float yaw, swing;
+        public int kind;
+        public EnemyPhase phase;
+        public string target;
+        public bool looted;
+    }
+
+    [Serializable]
+    public sealed class RaidState
+    {
+        public int id;
+        public Enemy[] enemies;
+        public bool cacheTaken, bossUnlocked;
+        public int veinsTaken;
+        public float gatherRemaining;
+        public System.Collections.Generic.List<Vector3> traps = new();
+    }
+
+    [Serializable]
+    public sealed class WorldState
+    {
+        public const int CurrentVersion = 4;
+        public int version = CurrentVersion;
+        public int day = 1, money = 120, debt = 50, arrears, lastTax, lastPayment, nextId = 1;
+        public DayPhase phase;
+        public bool decorated, bossDefeated;
+        public int[] market = new int[Catalog.Count];
+        public ShopShelf shelf = new();
+        public System.Collections.Generic.List<Crate> warehouse = new();
+        public System.Collections.Generic.List<PendingDelivery> deliveries = new();
+        public System.Collections.Generic.List<PlayerState> players = new();
+        public Customer customer;
+        public StationSession craft;
+        public CraftEvent[] lastCraft;
+        public int craftQuality;
+        public RaidState raid;
+        public float nextCustomer;
+    }
+
+    [Serializable]
+    public sealed class GameAction
+    {
+        public ActionKind kind;
+        public int value, extra;
+        public int[] ingredients;
+        public long operation;
+    }
+
+    [Serializable]
+    public sealed class MoveInput
+    {
+        public Vector2 axes;
+        public float yaw, pitch;
+        public bool sprint, jump, block, crouch;
+    }
+}

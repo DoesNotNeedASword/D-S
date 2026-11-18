@@ -1,0 +1,899 @@
+{
+  "entries": [
+    {
+      "key": "title",
+      "ru": "Лавка и подземелье",
+      "en": "Shop & Dungeon"
+    },
+    {
+      "key": "subtitle",
+      "ru": "Играбельный прототип  •  Лавка днём, вылазка ночью",
+      "en": "Playable prototype  •  Trade by day, raid by night"
+    },
+    {
+      "key": "menu.solo",
+      "ru": "Соло · продолжить / начать",
+      "en": "Solo · continue / start"
+    },
+    {
+      "key": "menu.party",
+      "ru": "Пати на двоих",
+      "en": "Two-player party"
+    },
+    {
+      "key": "menu.host",
+      "ru": "Создать / продолжить пати",
+      "en": "Host / resume party"
+    },
+    {
+      "key": "menu.join",
+      "ru": "Подключиться",
+      "en": "Join"
+    },
+    {
+      "key": "menu.address",
+      "ru": "IP или имя хоста · TCP 28731",
+      "en": "Host IP or name · TCP 28731"
+    },
+    {
+      "key": "menu.settings",
+      "ru": "Настройки",
+      "en": "Settings"
+    },
+    {
+      "key": "menu.exit",
+      "ru": "Выход",
+      "en": "Quit"
+    },
+    {
+      "key": "menu.back",
+      "ru": "Назад",
+      "en": "Back"
+    },
+    {
+      "key": "menu.resume",
+      "ru": "Продолжить",
+      "en": "Resume"
+    },
+    {
+      "key": "menu.leave",
+      "ru": "В главное меню",
+      "en": "Return to main menu"
+    },
+    {
+      "key": "menu.pause",
+      "ru": "Пауза / меню",
+      "en": "Pause / menu"
+    },
+    {
+      "key": "settings.sound",
+      "ru": "Громкость  {0}%",
+      "en": "Volume  {0}%"
+    },
+    {
+      "key": "settings.mouse",
+      "ru": "Чувствительность  {0:0.0}",
+      "en": "Mouse sensitivity  {0:0.0}"
+    },
+    {
+      "key": "settings.locale",
+      "ru": "Язык · Русский",
+      "en": "Language · English"
+    },
+    {
+      "key": "settings.bind",
+      "ru": "{0}  ·  {1}",
+      "en": "{0}  ·  {1}"
+    },
+    {
+      "key": "settings.press",
+      "ru": "Нажмите новую клавишу или Esc",
+      "en": "Press a new key or Esc"
+    },
+    {
+      "key": "settings.reset",
+      "ru": "Сбросить клавиши",
+      "en": "Reset controls"
+    },
+    {
+      "key": "bind.jump",
+      "ru": "Прыжок",
+      "en": "Jump"
+    },
+    {
+      "key": "bind.sprint",
+      "ru": "Бег",
+      "en": "Sprint"
+    },
+    {
+      "key": "bind.interact",
+      "ru": "Взаимодействие",
+      "en": "Interact"
+    },
+    {
+      "key": "bind.use",
+      "ru": "Использовать предмет",
+      "en": "Use item"
+    },
+    {
+      "key": "bind.inventory",
+      "ru": "Инвентарь",
+      "en": "Inventory"
+    },
+    {
+      "key": "network.connecting",
+      "ru": "Подключение…",
+      "en": "Connecting…"
+    },
+    {
+      "key": "network.timeout",
+      "ru": "Хост недоступен или не ответил.",
+      "en": "Host unavailable or timed out."
+    },
+    {
+      "key": "network.disconnected",
+      "ru": "Связь потеряна. Можно подключиться снова.",
+      "en": "Connection lost. You can join again."
+    },
+    {
+      "key": "network.full",
+      "ru": "Этот мир занят или сохранён за другим гостем.",
+      "en": "This world is full or reserved for another guest."
+    },
+    {
+      "key": "network.saveFailed",
+      "ru": "Не удалось сохранить мир. Проверьте права записи.",
+      "en": "Could not save the world. Check write permissions."
+    },
+    {
+      "key": "network.startFailed",
+      "ru": "Не удалось открыть сохранение или запустить хост.",
+      "en": "Could not load the save or start hosting."
+    },
+    {
+      "key": "network.listenFailed",
+      "ru": "Не удалось принять новое соединение.",
+      "en": "Could not accept a new connection."
+    },
+    {
+      "key": "phase.Preparation",
+      "ru": "Подготовка",
+      "en": "Preparation"
+    },
+    {
+      "key": "phase.Trading",
+      "ru": "Торговля",
+      "en": "Trading"
+    },
+    {
+      "key": "phase.Night",
+      "ru": "Ночь",
+      "en": "Night"
+    },
+    {
+      "key": "hud.shop",
+      "ru": "День {0}  ·  {1}\nКасса {2}    Долг {3}",
+      "en": "Day {0}  ·  {1}\nCash {2}    Debt {3}"
+    },
+    {
+      "key": "hud.raid",
+      "ru": "Ночь {0}  ·  Рейд #{1}\nДобыча {2}/{3}",
+      "en": "Night {0}  ·  Raid #{1}\nHaul {2}/{3}"
+    },
+    {
+      "key": "hud.interact",
+      "ru": "[{0}]  {1}",
+      "en": "[{0}]  {1}"
+    },
+    {
+      "key": "hud.main",
+      "ru": "Рука  {0}    |    Доп.  {1}",
+      "en": "Main  {0}    |    Offhand  {1}"
+    },
+    {
+      "key": "hud.both",
+      "ru": "Двуручное",
+      "en": "Two-handed"
+    },
+    {
+      "key": "hud.armor",
+      "ru": "Броня  {0}",
+      "en": "Armor  {0}"
+    },
+    {
+      "key": "hud.empty",
+      "ru": "—",
+      "en": "—"
+    },
+    {
+      "key": "hud.loot",
+      "ru": "Забрать добычу",
+      "en": "Collect loot"
+    },
+    {
+      "key": "hud.ready",
+      "ru": "Ожидание напарника · F отменить готовность",
+      "en": "Waiting for partner · F cancels readiness"
+    },
+    {
+      "key": "hud.sleep",
+      "ru": "Сон · ожидание общего утра",
+      "en": "Sleeping · waiting for dawn"
+    },
+    {
+      "key": "hud.dawn",
+      "ru": "F · готовность к утру",
+      "en": "F · ready for dawn"
+    },
+    {
+      "key": "hud.gather",
+      "ru": "Соберите жилы или ждите открытия прохода · {0} с",
+      "en": "Collect the ore veins or wait for the gate · {0} s"
+    },
+    {
+      "key": "hud.clear",
+      "ru": "Победите врагов, чтобы открыть проход к боссу",
+      "en": "Defeat the enemies to open the boss route"
+    },
+    {
+      "key": "hud.boss",
+      "ru": "Огненный страж · плащ у входа в зал сбора, щит и ловушки снижают риск",
+      "en": "Fire guardian · coat in the gathering room, shield and traps reduce risk"
+    },
+    {
+      "key": "hud.threat",
+      "ru": "Враг готовит атаку · блокируйте или выйдите из зоны удара",
+      "en": "Enemy winding up · block or leave its attack range"
+    },
+    {
+      "key": "site.Shelf",
+      "ru": "Торговая полка",
+      "en": "Display shelf"
+    },
+    {
+      "key": "site.Warehouse",
+      "ru": "Складские ящики",
+      "en": "Warehouse crates"
+    },
+    {
+      "key": "site.Register",
+      "ru": "Касса",
+      "en": "Register"
+    },
+    {
+      "key": "site.Supplier",
+      "ru": "Поставщик",
+      "en": "Supplier"
+    },
+    {
+      "key": "site.Bank",
+      "ru": "Банк",
+      "en": "Bank"
+    },
+    {
+      "key": "site.Bench",
+      "ru": "Алхимический стол",
+      "en": "Alchemy bench"
+    },
+    {
+      "key": "site.Gate",
+      "ru": "Вход в подземелье",
+      "en": "Dungeon gate"
+    },
+    {
+      "key": "site.Bed",
+      "ru": "Кровать",
+      "en": "Bed"
+    },
+    {
+      "key": "site.Exit",
+      "ru": "Выйти с добычей",
+      "en": "Extract loot"
+    },
+    {
+      "key": "site.Decor",
+      "ru": "Декор лавки",
+      "en": "Shop decoration"
+    },
+    {
+      "key": "item.0",
+      "ru": "Зелье",
+      "en": "Tonic"
+    },
+    {
+      "key": "item.1",
+      "ru": "Трава",
+      "en": "Herb"
+    },
+    {
+      "key": "item.2",
+      "ru": "Меч",
+      "en": "Blade"
+    },
+    {
+      "key": "item.3",
+      "ru": "Щит",
+      "en": "Shield"
+    },
+    {
+      "key": "item.4",
+      "ru": "Огнестойкий плащ",
+      "en": "Fireproof coat"
+    },
+    {
+      "key": "item.5",
+      "ru": "Ловушка",
+      "en": "Trap"
+    },
+    {
+      "key": "item.6",
+      "ru": "Двуручный меч",
+      "en": "Greatblade"
+    },
+    {
+      "key": "item.7",
+      "ru": "Руда",
+      "en": "Ore"
+    },
+    {
+      "key": "item.8",
+      "ru": "Уголь стража",
+      "en": "Guardian ember"
+    },
+    {
+      "key": "item.9",
+      "ru": "Зелье бодрости",
+      "en": "Focus tonic"
+    },
+    {
+      "key": "panel.close",
+      "ru": "Закрыть · Esc",
+      "en": "Close · Esc"
+    },
+    {
+      "key": "panel.inventory",
+      "ru": "Личный рюкзак",
+      "en": "Personal backpack"
+    },
+    {
+      "key": "panel.offhand",
+      "ru": "Надеть / снять щит",
+      "en": "Equip / remove shield"
+    },
+    {
+      "key": "panel.carry",
+      "ru": "Добыча до выхода  {0}/{1}",
+      "en": "Unsecured haul  {0}/{1}"
+    },
+    {
+      "key": "panel.empty",
+      "ru": "Здесь пока пусто",
+      "en": "Nothing here yet"
+    },
+    {
+      "key": "warehouse.crate",
+      "ru": "Ящик #{0} · {1} ×{2}",
+      "en": "Crate #{0} · {1} ×{2}"
+    },
+    {
+      "key": "warehouse.grade",
+      "ru": " · качество {0}%",
+      "en": " · grade {0}%"
+    },
+    {
+      "key": "warehouse.wait",
+      "ru": "Завтра  ·  {0} ×{1} · оплачено {2}",
+      "en": "Tomorrow  ·  {0} ×{1} · paid {2}"
+    },
+    {
+      "key": "price.auto",
+      "ru": "Актуальная цена",
+      "en": "Market price"
+    },
+    {
+      "key": "price.manual",
+      "ru": "Ручная цена",
+      "en": "Manual price"
+    },
+    {
+      "key": "register.report",
+      "ru": "Касса {0} · долг {1} · налог утром {2} · взнос по кредиту до {3} · недоимка {4}",
+      "en": "Cash {0} · debt {1} · tax at dawn {2} · loan payment up to {3} · arrears {4}"
+    },
+    {
+      "key": "register.yesterday",
+      "ru": "Последнее утро · налог {0} · выплата кредита {1}",
+      "en": "Last dawn · tax {0} · loan payment {1}"
+    },
+    {
+      "key": "register.open",
+      "ru": "Открыть лавку (−{0} EP)",
+      "en": "Open shop (−{0} EP)"
+    },
+    {
+      "key": "register.close",
+      "ru": "Закрыть смену → ночь",
+      "en": "Close shift → night"
+    },
+    {
+      "key": "supplier.hint",
+      "ru": "Ящик из 6 единиц · 20% скидка · доставка на склад утром",
+      "en": "6 items per crate · 20% discount · delivered to warehouse at dawn"
+    },
+    {
+      "key": "supplier.order",
+      "ru": "Заказать · {0}",
+      "en": "Order · {0}"
+    },
+    {
+      "key": "bench.busy",
+      "ru": "За столом работает напарник",
+      "en": "Your partner is using this bench"
+    },
+    {
+      "key": "craft.finish",
+      "ru": "Завершить рецепт",
+      "en": "Finish recipe"
+    },
+    {
+      "key": "craft.cancel",
+      "ru": "Отменить крафт",
+      "en": "Cancel recipe"
+    },
+    {
+      "key": "gate.hint",
+      "ru": "Вход ночью · −{0} EP · напарник может догнать. Вернитесь к входу, чтобы отправить добычу на склад.",
+      "en": "Night entry · −{0} EP · partner can catch up. Return to the entrance to send loot to the warehouse."
+    },
+    {
+      "key": "gate.enter",
+      "ru": "Войти / догнать напарника",
+      "en": "Enter / catch up with partner"
+    },
+    {
+      "key": "bed.hint",
+      "ru": "Сон восстанавливает {0} EP утром. После работы ночью или рейда сон недоступен.",
+      "en": "Sleep restores {0} EP at dawn. Night work or a raid prevents sleep."
+    },
+    {
+      "key": "bed.sleep",
+      "ru": "Спать и подтвердить утро",
+      "en": "Sleep and confirm dawn"
+    },
+    {
+      "key": "bed.ready",
+      "ru": "Подтвердить / отменить утро без сна",
+      "en": "Toggle readiness without sleeping"
+    },
+    {
+      "key": "exit.go",
+      "ru": "Вернуться в лавку",
+      "en": "Return to the shop"
+    },
+    {
+      "key": "decor.toggle",
+      "ru": "Поставить / убрать украшение",
+      "en": "Place / remove decoration"
+    },
+    {
+      "key": "error.reach",
+      "ru": "Подойдите ближе к нужному объекту.",
+      "en": "Move closer to the target."
+    },
+    {
+      "key": "error.busy",
+      "ru": "Действие недоступно в текущем состоянии.",
+      "en": "That action is unavailable now."
+    },
+    {
+      "key": "error.stock",
+      "ru": "Товара нет или он уже перемещён.",
+      "en": "Item unavailable or already moved."
+    },
+    {
+      "key": "error.capacity",
+      "ru": "Недостаточно места.",
+      "en": "Not enough room."
+    },
+    {
+      "key": "error.shift",
+      "ru": "Смена недоступна или не хватает EP.",
+      "en": "Shift unavailable or not enough EP."
+    },
+    {
+      "key": "error.customer",
+      "ru": "Нет покупателя с товаром у кассы.",
+      "en": "There is no customer with an item at checkout."
+    },
+    {
+      "key": "error.night",
+      "ru": "Действие доступно в другой фазе или зоне.",
+      "en": "Available in a different phase or zone."
+    },
+    {
+      "key": "error.money",
+      "ru": "Недостаточно денег.",
+      "en": "Not enough money."
+    },
+    {
+      "key": "error.debt",
+      "ru": "Сначала погасите часть долга.",
+      "en": "Pay down some debt first."
+    },
+    {
+      "key": "error.sequence",
+      "ru": "Завершите текущий этап рецепта.",
+      "en": "Complete the current recipe step."
+    },
+    {
+      "key": "error.sleep",
+      "ru": "Сегодня этой ночью уже выбрано занятие.",
+      "en": "You already chose an activity for tonight."
+    },
+    {
+      "key": "error.hands",
+      "ru": "Нужен щит и свободная дополнительная рука.",
+      "en": "You need a shield and a free offhand."
+    },
+    {
+      "key": "error.fullHp",
+      "ru": "Здоровье уже полное.",
+      "en": "Health is already full."
+    },
+    {
+      "key": "error.fullEp",
+      "ru": "Бодрость уже полная.",
+      "en": "Energy is already full."
+    },
+    {
+      "key": "error.trap",
+      "ru": "Здесь нельзя поставить ловушку.",
+      "en": "Cannot place a trap here."
+    },
+    {
+      "key": "error.use",
+      "ru": "Этот предмет не расходуется.",
+      "en": "This item is not consumable."
+    },
+    {
+      "key": "error.energy",
+      "ru": "Не хватает бодрости на вылазку.",
+      "en": "Not enough energy to enter the raid."
+    },
+    {
+      "key": "error.loot",
+      "ru": "Добыча недоступна или уже собрана.",
+      "en": "Loot unavailable or already collected."
+    },
+    {
+      "key": "notice.dawn",
+      "ru": "Утро. Рынок обновлён, поставки на складе.",
+      "en": "Dawn. Market refreshed, deliveries in the warehouse."
+    },
+    {
+      "key": "notice.sold",
+      "ru": "Покупка проведена.",
+      "en": "Sale completed."
+    },
+    {
+      "key": "notice.night",
+      "ru": "Лавка закрыта. Подготовьте рейд или выберите сон.",
+      "en": "Shop closed. Prepare a raid or choose sleep."
+    },
+    {
+      "key": "notice.order",
+      "ru": "Оплачено. Ящик прибудет следующим утром.",
+      "en": "Paid. The crate arrives next morning."
+    },
+    {
+      "key": "notice.empty",
+      "ru": "Покупатель ушёл · полка пуста.",
+      "en": "Customer left · display empty."
+    },
+    {
+      "key": "notice.expensive",
+      "ru": "Покупатель ушёл · цена слишком высокая.",
+      "en": "Customer left · price too high."
+    },
+    {
+      "key": "notice.raid",
+      "ru": "Вы вошли в общий рейд. Выход у входа.",
+      "en": "You entered the shared raid. Extract at the entrance."
+    },
+    {
+      "key": "notice.return",
+      "ru": "Добыча доставлена на склад.",
+      "en": "Loot delivered to the warehouse."
+    },
+    {
+      "key": "notice.loot",
+      "ru": "Добыча собрана.",
+      "en": "Loot collected."
+    },
+    {
+      "key": "notice.defeated",
+      "ru": "Поражение. Добыча рейда потеряна, экипировка сохранена.",
+      "en": "Defeated. Raid loot lost, equipment kept."
+    },
+    {
+      "key": "bind.crate",
+      "ru": "Активный слот ящика",
+      "en": "Active crate slot"
+    },
+    {
+      "key": "hud.shopControls",
+      "ru": "WASD · {0} действие · {1} взять единицу / предмет · {2} ящик · {3} рюкзак",
+      "en": "WASD · {0} interact · {1} take one / use item · {2} crate · {3} backpack"
+    },
+    {
+      "key": "hud.crateActive",
+      "ru": "[{0}] Ящик в руках · {1} ×{2}",
+      "en": "[{0}] Crate in hand · {1} ×{2}"
+    },
+    {
+      "key": "hud.crateStored",
+      "ru": "[{0}] Взять в руки ящик · {1} ×{2}",
+      "en": "[{0}] Equip crate · {1} ×{2}"
+    },
+    {
+      "key": "hud.crateFocus",
+      "ru": "{0} ×{1}  ·  [{2}] Взять ящик  ·  [{3}] Взять 1 в рюкзак",
+      "en": "{0} ×{1}  ·  [{2}] Pick up crate  ·  [{3}] Take one to backpack"
+    },
+    {
+      "key": "hud.stock",
+      "ru": "[{0}] Выложить 1  ·  Удерживать — всё  ·  Полка {1}/{2}, единица занимает {3}",
+      "en": "[{0}] Stock one  ·  Hold to stock all  ·  Shelf {1}/{2}, {3} slots per item"
+    },
+    {
+      "key": "hud.shelfPrices",
+      "ru": "Ценники полки · занято {0}/{1}",
+      "en": "Shelf prices · {0}/{1} slots used"
+    },
+    {
+      "key": "hud.placeCrate",
+      "ru": "Поставить ящик на складскую полку",
+      "en": "Put the crate on the warehouse rack"
+    },
+    {
+      "key": "hud.aimCrate",
+      "ru": "Наведитесь на ящик, чтобы его взять",
+      "en": "Aim at a crate to pick it up"
+    },
+    {
+      "key": "hud.collect",
+      "ru": "Собрать {0}  ·  На кассе ещё {1}",
+      "en": "Collect {0}  ·  {1} still on the counter"
+    },
+    {
+      "key": "hud.register",
+      "ru": "Касса {0}  ·  Наводитесь на стопки монет по очереди",
+      "en": "Register {0}  ·  Aim at each coin stack to collect it"
+    },
+    {
+      "key": "hud.enter",
+      "ru": "Войти в рейд ночью (−{0} EP)",
+      "en": "Enter the night raid (−{0} EP)"
+    },
+    {
+      "key": "sign.open",
+      "ru": "ОТКРЫТО",
+      "en": "OPEN"
+    },
+    {
+      "key": "sign.closed",
+      "ru": "ЗАКРЫТО",
+      "en": "CLOSED"
+    },
+    {
+      "key": "money.gold",
+      "ru": "{0}з",
+      "en": "{0}g"
+    },
+    {
+      "key": "money.silver",
+      "ru": "{0}с",
+      "en": "{0}s"
+    },
+    {
+      "key": "money.copper",
+      "ru": "{0}м",
+      "en": "{0}c"
+    },
+    {
+      "key": "money.goldName",
+      "ru": "Золото",
+      "en": "Gold"
+    },
+    {
+      "key": "money.silverName",
+      "ru": "Серебро",
+      "en": "Silver"
+    },
+    {
+      "key": "money.copperName",
+      "ru": "Медь",
+      "en": "Copper"
+    },
+    {
+      "key": "price.details",
+      "ru": "{0} ×{1} · {2} сл. / ед. · Рынок {3} · Ценник {4}",
+      "en": "{0} ×{1} · {2} slots / unit · Market {3} · Tag {4}"
+    },
+    {
+      "key": "price.apply",
+      "ru": "Сохранить ручную",
+      "en": "Save manual price"
+    },
+    {
+      "key": "price.retrieve",
+      "ru": "Убрать на склад",
+      "en": "Return to warehouse"
+    },
+    {
+      "key": "error.price",
+      "ru": "Укажите ненулевую цену, от 0 до 99 монет каждого номинала.",
+      "en": "Enter a nonzero price, with 0 to 99 coins per denomination."
+    },
+    {
+      "key": "error.holding",
+      "ru": "Сначала верните свой ящик на складскую полку.",
+      "en": "Return your crate to the warehouse rack first."
+    },
+    {
+      "key": "error.payment",
+      "ru": "Соберите оставшиеся стопки перед закрытием смены.",
+      "en": "Collect the remaining stacks before closing the shop."
+    },
+    {
+      "key": "bank.loan",
+      "ru": "Взять кредит · получить {0}, долг +{1}",
+      "en": "Borrow · receive {0}, debt +{1}"
+    },
+    {
+      "key": "bank.repay",
+      "ru": "Выплатить до {0} долга",
+      "en": "Repay up to {0} of debt"
+    },
+    {
+      "key": "bench.ingredient",
+      "ru": "{0}  ·  выбрано {1} из {2}",
+      "en": "{0}  ·  selected {1} of {2}"
+    },
+    {
+      "key": "bench.begin",
+      "ru": "Начать варку",
+      "en": "Start brewing"
+    },
+    {
+      "key": "error.craftTime",
+      "ru": "Время варки истекло. Ингредиенты остались в рюкзаке.",
+      "en": "Brewing timed out. The ingredients stayed in your backpack."
+    },
+    {
+      "key": "notice.crafted",
+      "ru": "Сварено зелье здоровья. Ящик на складе.",
+      "en": "Health tonic brewed. The crate is in the warehouse."
+    },
+    {
+      "key": "notice.craftedFocus",
+      "ru": "Сварено зелье бодрости. Ящик на складе.",
+      "en": "Focus tonic brewed. The crate is in the warehouse."
+    },
+    {
+      "key": "item.10",
+      "ru": "Походные сапоги",
+      "en": "Travel boots"
+    },
+    {
+      "key": "item.11",
+      "ru": "Стёганые поножи",
+      "en": "Quilted leggings"
+    },
+    {
+      "key": "item.12",
+      "ru": "Железный шлем",
+      "en": "Iron helmet"
+    },
+    {
+      "key": "armor.Feet",
+      "ru": "Стопы",
+      "en": "Feet"
+    },
+    {
+      "key": "armor.Legs",
+      "ru": "Ноги",
+      "en": "Legs"
+    },
+    {
+      "key": "armor.Torso",
+      "ru": "Торс",
+      "en": "Torso"
+    },
+    {
+      "key": "armor.Head",
+      "ru": "Шлем",
+      "en": "Head"
+    },
+    {
+      "key": "inventory.hint",
+      "ru": "Перетащи предмет или наведи на него и нажми 1–0 для назначения.",
+      "en": "Drag an item, or hover over it and press 1–0 to assign it."
+    },
+    {
+      "key": "error.armorSlot",
+      "ru": "Этот предмет не подходит для выбранной ячейки брони.",
+      "en": "This item does not fit that armor slot."
+    },
+    {
+      "key": "craft.Stir",
+      "ru": "Возьми ложку и води по кругу · Перемешано {0:0.0} с · Цель {1:0.0}–{2:0.0} с",
+      "en": "Grab the spoon and move it in circles · Stirred {0:0.0} s · Target {1:0.0}–{2:0.0} s"
+    },
+    {
+      "key": "item.13",
+      "ru": "Зелье защиты",
+      "en": "Ward potion"
+    },
+    {
+      "key": "bind.crouch",
+      "ru": "Присесть (удерживать)",
+      "en": "Crouch (hold)"
+    },
+    {
+      "key": "hud.controls",
+      "ru": "WASD · ЛКМ удар · ПКМ щит · {0} предмет · {1} рюкзак · {2} присесть",
+      "en": "WASD · LMB attack · RMB shield · {0} use · {1} inventory · {2} crouch"
+    },
+    {
+      "key": "hud.crouched",
+      "ru": "Крадёшься · враги замечают с меньшего расстояния",
+      "en": "Sneaking · enemies detect you at shorter range"
+    },
+    {
+      "key": "bench.hint",
+      "ru": "Выбери от двух до шести ингредиентов. У каждого свой эффект, который меняется при измельчении.",
+      "en": "Choose two to six reagents. Each has its own effect, which changes when crushed."
+    },
+    {
+      "key": "bench.effects",
+      "ru": "{0} · сырым: {1} · измельчённым: {2}",
+      "en": "{0} · raw: {1} · crushed: {2}"
+    },
+    {
+      "key": "craft.Ingredients",
+      "ru": "Перетащи ингредиенты по одному: сразу в котёл или в ступку. В котле {0}/{1}.",
+      "en": "Drag reagents one at a time into the cauldron or mortar. Added {0}/{1}."
+    },
+    {
+      "key": "craft.grind",
+      "ru": "{0} в ступке · пестиком вверх и вниз {1}/{2}. Можно сразу переложить в котёл. В котле {3}/{4}.",
+      "en": "{0} in mortar · raise and press the pestle {1}/{2}. Or add it raw. Added {3}/{4}."
+    },
+    {
+      "key": "craft.ground",
+      "ru": "{0} измельчён. Переложи в котёл · {1}/{2}.",
+      "en": "{0} crushed. Move it into the cauldron · {1}/{2}."
+    },
+    {
+      "key": "notice.craftedWard",
+      "ru": "Сварено зелье защиты. Ящик на складе.",
+      "en": "Ward potion brewed. The crate is in the warehouse."
+    },
+    {
+      "key": "error.ward",
+      "ru": "Зелье защиты ещё действует.",
+      "en": "The ward is already active."
+    },
+    {
+      "key": "error.mortarOccupied",
+      "ru": "В ступке уже есть ингредиент.",
+      "en": "The mortar already holds a reagent."
+    },
+    {
+      "key": "error.ingredients",
+      "ru": "Выбери от 2 до 6 доступных ингредиентов: трава, руда или уголь стража.",
+      "en": "Choose two to six available reagents: herb, ore or guardian ember."
+    }
+  ]
+}
