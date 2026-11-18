@@ -73,26 +73,38 @@ namespace DungeonsNShops
             if (player.ready || player.night == NightChoice.Sleeping || State.craft?.owner == player.id)
                 return "error.busy";
 
-            if (action.kind == ActionKind.SelectCrate)
-            {
-                if (!(player.carriedCrate?.id > 0)) return "error.stock";
-                player.crateActive = !player.crateActive;
-                return null;
-            }
-
             if (player.zone != Zone.Shop) return "error.reach";
             ShopTarget target = default;
             if (action.kind is ActionKind.CarryCrate or ActionKind.TakeCrate or ActionKind.PlaceCrate or
-                ActionKind.Stock or ActionKind.Open or ActionKind.Close or ActionKind.Sell)
+                ActionKind.DiscardCrate or ActionKind.Stock or ActionKind.Open or ActionKind.Close or ActionKind.Sell)
                 target = ShopTargets.Find(State, player.position, control.input.yaw, control.input.pitch, player.HoldingCrate, player.EyeHeight);
 
             switch (action.kind)
             {
+                case ActionKind.DropCrate:
+                    if (!player.HoldingCrate) return "error.stock";
+                    Crate thrown = player.carriedCrate;
+                    Vector3 aim = Quaternion.Euler(control.input.pitch, control.input.yaw, 0) * Vector3.forward;
+                    thrown.position = player.position + Vector3.up * (player.EyeHeight - 0.15f);
+                    thrown.angles = Vector3.up * control.input.yaw;
+                    thrown.velocity = aim * 3.8f + Vector3.up * 0.55f;
+                    thrown.spin = new Vector3(1.4f, 1.8f, 0.7f);
+                    State.dropped.Add(thrown);
+                    player.carriedCrate = null;
+                    player.crateActive = false;
+                    break;
+                case ActionKind.DiscardCrate:
+                    if (!player.HoldingCrate || player.carriedCrate.id != action.value || target.Site != Site.Bin) return "error.reach";
+                    player.carriedCrate = null;
+                    player.crateActive = false;
+                    break;
                 case ActionKind.CarryCrate:
                     if (player.carriedCrate?.id > 0) return "error.holding";
                     if (target.Kind != ShopTargetKind.Crate || target.Id != action.value) return "error.reach";
-                    Crate picked = State.warehouse.Find(c => c.id == action.value);
-                    State.warehouse.Remove(picked);
+                    var container = target.Site == Site.Warehouse ? State.warehouse : State.dropped;
+                    Crate picked = container.Find(c => c.id == action.value);
+                    if (picked == null) return "error.stock";
+                    container.Remove(picked);
                     picked.rackSlot = -1;
                     player.carriedCrate = picked;
                     player.crateActive = true;
@@ -101,20 +113,15 @@ namespace DungeonsNShops
                 case ActionKind.TakeCrate:
                     bool own = player.HoldingCrate && player.carriedCrate.id == action.value;
                     if (!own && (target.Kind != ShopTargetKind.Crate || target.Id != action.value)) return "error.reach";
-                    Crate source = own ? player.carriedCrate : State.warehouse.Find(c => c.id == action.value);
+                    Crate source = own ? player.carriedCrate : State.warehouse.Find(c => c.id == action.value) ?? State.dropped.Find(c => c.id == action.value);
                     if (source == null || source.count <= 0) return "error.stock";
                     if (!InventoryLayout.Add(player, source.item, 1)) return "error.capacity";
                     source.count--;
-                    if (!own && source.count == 0)
-                    {
-                        State.warehouse.Remove(source);
-                        FillRack();
-                    }
                     break;
                 case ActionKind.PlaceCrate:
                     if (!player.HoldingCrate || player.carriedCrate.id != action.value ||
                         target.Kind != ShopTargetKind.Site || target.Site != Site.Warehouse) return "error.reach";
-                    if (player.carriedCrate.count > 0) PutOnRack(player.carriedCrate);
+                    PutOnRack(player.carriedCrate);
                     player.carriedCrate = null;
                     player.crateActive = false;
                     break;

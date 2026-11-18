@@ -195,7 +195,7 @@ namespace DungeonsNShops
             string interact = bindings.Display(Bind.Interact);
             if (focus.Kind == ShopTargetKind.Crate)
             {
-                Crate crate = world.warehouse.Find(box => box.id == focus.Id);
+                Crate crate = world.warehouse.Find(box => box.id == focus.Id) ?? world.dropped.Find(box => box.id == focus.Id);
                 if (crate == null) return "";
                 string hint = T("hud.crateFocus", ItemName(crate.item), crate.count, interact, bindings.Display(Bind.Use));
                 return crate.quality > 0 ? hint + " " + T("warehouse.grade", crate.quality) : hint;
@@ -208,8 +208,11 @@ namespace DungeonsNShops
                 return T("hud.interact", interact, T("hud.collect", Currency(buyer.payment[focus.Index]), Currency(remaining)));
             }
 
+            if (player.HoldingCrate && focus.Site is not (Site.Shelf or Site.Warehouse or Site.Bin))
+                return T("hud.throw", bindings.Display(Bind.Crate));
             switch (focus.Site)
             {
+                case Site.Bin: return player.HoldingCrate ? T("hud.discard", interact) : T("site.Bin");
                 case Site.None: return "";
                 case Site.Shelf:
                     return player.HoldingCrate

@@ -113,6 +113,8 @@ namespace DungeonsNShops
                 else if (stage == 3 && runtime.State.shelf.Used == 8)
                 {
                     simulatedInput.held = null;
+                    runtime.Command(ActionKind.DropCrate);
+                    Check(runtime.State.dropped.Count == 1 && !runtime.LocalPlayer.HoldingCrate, "throw frees both hands");
                     InventoryLayout.Add(runtime.LocalPlayer, (int)Item.Herb, 2);
                     simulatedInput.aim = AimStation(runtime.LocalPlayer, Site.Bench);
                     simulatedInput.next = Bind.Interact;
@@ -260,6 +262,8 @@ namespace DungeonsNShops
                     Check(runtime.LocalPlayer.crouched && runtime.LocalPlayer.guarding &&
                         Camera.main.transform.position.y < 1.25f && GameObject.Find("Equipped shield") != null,
                         "crouch lowers the camera and the equipped shield animates");
+                    var settled = runtime.State.dropped.Single();
+                    Check(settled.position.y < 1.25f && settled.velocity.sqrMagnitude < 0.01f, "rigidbody crate settles");
                     if (Application.isBatchMode) Capture("PrototypeRaid");
                     Debug.Log("PROTOTYPE PLAY PASSED: individual reagents, pestle, stirring, inventory, crouch and shield");
                     EndPlayCheck(true);
@@ -424,9 +428,9 @@ namespace DungeonsNShops
             Check(state.shelf.Used == 8 && tonic.count == 0, "hold stocks the remaining units");
 
             Vector3 rack = new(-8.22f, 0.6f, 1.15f);
-            world.ReceiveMove(a.id, Aim(a, rack, aisle));
-            Do(a, ActionKind.PlaceCrate, tonic.id);
-            Check(!a.HoldingCrate && a.carriedCrate == null, "empty crate clears at the warehouse");
+            world.ReceiveMove(a.id, AimStation(a, Site.Bin));
+            Do(a, ActionKind.DiscardCrate, tonic.id);
+            Check(!a.HoldingCrate && a.carriedCrate == null, "discard bin removes the held crate");
 
             Crate sword = new() { id = state.nextId++, item = (int)Item.Blade, count = 2, rackSlot = 0 };
             state.warehouse.Add(sword);
@@ -664,6 +668,8 @@ namespace DungeonsNShops
             host.State.raid.enemies[0].phase = EnemyPhase.Defeated;
             host.State.raid.enemies[0].looted = true;
             Until(guest, () => guest.State.raid?.id == raidId && guest.LocalPlayer.zone == Zone.Shop, "split zones");
+            guest.Command(ActionKind.DropCrate);
+            Until(guest, () => guest.State.dropped.Exists(c => c.id == crate.id), "thrown crate replicates to guest");
             visitor.position = Map.SitePosition(Site.Gate);
             guest.Command(ActionKind.Enter);
             Until(guest, () => guest.LocalPlayer.zone == Zone.Raid, "guest late entry");

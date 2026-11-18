@@ -15,6 +15,8 @@ namespace DungeonsNShops
         }
 
         private readonly Dictionary<string, Controls> controls = new();
+        private CratePhysics cratePhysics;
+        internal void Dispose() => cratePhysics?.Dispose();
         private readonly Balance balance;
         public WorldState State { get; }
         public bool Dirty { get; private set; }
@@ -109,7 +111,9 @@ namespace DungeonsNShops
 
             player.lastOperation = action.operation;
             Dirty = true;
-            string error = action.kind switch
+            bool handsBusy = player.HoldingCrate && action.kind is not (ActionKind.PlaceCrate or ActionKind.DropCrate
+                or ActionKind.DiscardCrate or ActionKind.Stock or ActionKind.TakeCrate);
+            string error = handsBusy ? "error.handsBusy" : action.kind switch
             {
                 ActionKind.Select or ActionKind.Offhand or ActionKind.Use or ActionKind.MoveInventory => Equipment(player, action),
                 ActionKind.Enter or ActionKind.Exit or ActionKind.Strike or ActionKind.Loot => Expedition(player, control, action),
@@ -128,6 +132,11 @@ namespace DungeonsNShops
                 if (controls.TryGetValue(player.id, out Controls control))
                     Move(player, control, delta);
 
+            if (Application.isPlaying && (State.dropped.Count > 0 || cratePhysics != null))
+            {
+                cratePhysics ??= new CratePhysics();
+                Dirty |= cratePhysics.Tick(State.dropped, delta);
+            }
             TickCustomer(delta);
             TickCraft(delta);
             TickRaid(delta);

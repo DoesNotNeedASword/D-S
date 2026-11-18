@@ -9,7 +9,7 @@ namespace DungeonsNShops
     public enum DayPhase { Preparation, Trading, Night }
     public enum NightChoice { Free, Working, Raiding, Sleeping }
     public enum Zone { Shop, Raid }
-    public enum Site { None, Shelf, Warehouse, Register, Supplier, Bank, Bench, Gate, Bed, Exit, Decor, Sign }
+    public enum Site { None, Shelf, Warehouse, Register, Supplier, Bank, Bench, Gate, Bed, Exit, Decor, Sign, Bin }
     public enum CustomerPhase { Walking, Choosing, Checkout, Leaving }
     public enum CraftStep { Mortar, Cauldron, Stir, Ingredients, Grind }
     public enum ReagentStage { Tray, Mortar, Ground, Pot }
@@ -18,7 +18,7 @@ namespace DungeonsNShops
     {
         Stock, TakeCrate, Retrieve, Price, Open, Sell, Close, Order, Loan, Repay,
         BeginCraft, CraftZone, Stir, FinishCraft, CancelCraft, Enter, Exit, Sleep, Ready, Select,
-        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient, ExpandBelt
+        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient, ExpandBelt, DropCrate, DiscardCrate
     }
 
     public readonly struct ItemDefinition
@@ -98,7 +98,7 @@ namespace DungeonsNShops
         public string notice;
         public int noticeVersion;
 
-        public bool HoldingCrate => crateActive && carriedCrate?.id > 0;
+        public bool HoldingCrate => carriedCrate?.id > 0;
         public InventoryStack Quick(int index) => inventory.Find(s => s.cell == InventoryLayout.HotbarStart + index);
         public int Count(int item)
         {
@@ -118,6 +118,7 @@ namespace DungeonsNShops
     {
         public int id, item, count, unitCost, quality;
         public int rackSlot = -1;
+        public Vector3 position, angles, velocity, spin;
     }
 
     [Serializable]
@@ -229,6 +230,7 @@ namespace DungeonsNShops
         public bool decorated, bossDefeated;
         public int[] market = new int[Catalog.Count];
         public ShopShelf shelf = new();
+        public List<Crate> dropped = new();
         public System.Collections.Generic.List<Crate> warehouse = new();
         public System.Collections.Generic.List<PendingDelivery> deliveries = new();
         public System.Collections.Generic.List<PlayerState> players = new();

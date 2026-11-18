@@ -155,6 +155,7 @@ namespace DungeonsNShops
             transport?.Dispose();
             if (authority != null && authority.Dirty)
                 Persist();
+            authority?.Dispose();
         }
 
         private void Persist()

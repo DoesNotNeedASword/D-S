@@ -112,8 +112,12 @@ namespace DungeonsNShops
                 if (player.night != NightChoice.Sleeping && keyboard?.fKey.wasPressedThisFrame == true && world.phase == DayPhase.Night)
                     Command(ActionKind.Ready);
                 int slot = input.Slot;
-                if (slot >= 0) Command(ActionKind.Select, slot);
-                if (input.Pressed(Bind.Crate)) Command(ActionKind.SelectCrate);
+                if (slot >= 0 && slot < player.quickSlots && !player.HoldingCrate) Command(ActionKind.Select, slot);
+                if (player.HoldingCrate && input.Pressed(Bind.Crate))
+                {
+                    session.Move(motion);
+                    Command(ActionKind.DropCrate);
+                }
                 if (input.Attack && player.zone == Zone.Raid) Command(ActionKind.Strike);
                 if (input.Pressed(Bind.Use))
                 {
@@ -124,7 +128,7 @@ namespace DungeonsNShops
                     }
                     else Command(ActionKind.Use);
                 }
-                if (input.Pressed(Bind.Inventory)) Show(ScreenMode.Inventory);
+                if (!player.HoldingCrate && input.Pressed(Bind.Inventory)) Show(ScreenMode.Inventory);
                 else
                 {
                     if (input.Pressed(Bind.Interact))
@@ -198,12 +202,16 @@ namespace DungeonsNShops
                 return;
             }
 
+            if (player.HoldingCrate && target.Site != Site.Warehouse && target.Site != Site.Bin) return;
             if (target.Kind == ShopTargetKind.Crate)
                 Command(ActionKind.CarryCrate, target.Id);
             else if (target.Kind == ShopTargetKind.Payment)
                 Command(ActionKind.Sell, target.Id, target.Index);
             else switch (target.Site)
             {
+                case Site.Bin:
+                    if (player.HoldingCrate) Command(ActionKind.DiscardCrate, player.carriedCrate.id);
+                    break;
                 case Site.Warehouse:
                     if (player.HoldingCrate) Command(ActionKind.PlaceCrate, player.carriedCrate.id);
                     break;

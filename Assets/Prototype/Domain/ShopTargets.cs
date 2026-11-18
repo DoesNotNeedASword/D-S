@@ -26,7 +26,7 @@ namespace DungeonsNShops
         private static readonly Site[] Stations =
         {
             Site.Shelf, Site.Warehouse, Site.Register, Site.Supplier, Site.Bank,
-            Site.Bench, Site.Gate, Site.Bed, Site.Decor, Site.Sign
+            Site.Bench, Site.Gate, Site.Bed, Site.Decor, Site.Sign, Site.Bin
         };
 
         public static readonly Vector3 CrateSize = new(0.52f, 0.4f, 0.73f);
@@ -48,6 +48,7 @@ namespace DungeonsNShops
             {
                 Site.Shelf => new Bounds(position + Vector3.up * 0.61f, new Vector3(2.05f, 1.22f, 0.7f)),
                 Site.Register => new Bounds(position + Vector3.up * 0.45f, new Vector3(2.2f, 0.9f, 0.65f)),
+                Site.Bin => new Bounds(position + Vector3.up * 0.52f, new Vector3(0.84f, 1.04f, 0.84f)),
                 Site.Sign => new Bounds(position + Vector3.up * 1.42f, SignSize),
                 Site.Bench => new Bounds(position + Vector3.up * 0.55f, new Vector3(2, 1.1f, 0.9f)),
                 _ => new Bounds(position + Vector3.up * 0.9f, new Vector3(1.3f, 1.8f, 1.15f))
@@ -73,6 +74,19 @@ namespace DungeonsNShops
                 Consider(new Bounds(CratePosition(crate.rackSlot), CrateSize),
                     new ShopTarget(ShopTargetKind.Crate, Site.Warehouse, crate.id));
             }
+
+            if (!holdingCrate)
+                foreach (Crate crate in world.dropped)
+                {
+                    var rotation = Quaternion.Euler(crate.angles);
+                    Ray localRay = new(Quaternion.Inverse(rotation) * (ray.origin - crate.position),
+                        Quaternion.Inverse(rotation) * ray.direction);
+                    if (new Bounds(Vector3.zero, CrateSize).IntersectRay(localRay, out float distance) && distance < nearest)
+                    {
+                        nearest = distance;
+                        target = new ShopTarget(ShopTargetKind.Crate, Site.None, crate.id);
+                    }
+                }
 
             Customer buyer = world.customer;
             if (buyer?.phase == CustomerPhase.Checkout && buyer.payment != null)

@@ -66,18 +66,49 @@ namespace DungeonsNShops
 
         public void Crate(Transform parent)
         {
-            for (int y = -1; y <= 1; y++)
+            parent.GetComponent<Renderer>().enabled = false;
+            for (int board = 0; board < 4; board++)
             {
-                Part(parent, "Front plank", new Vector3(0, y * 0.325f, -0.505f), new Vector3(0.97f, 0.302f, 0.065f), Wood);
-                Part(parent, "Rear plank", new Vector3(0, y * 0.325f, 0.505f), new Vector3(0.97f, 0.302f, 0.065f), Wood);
+                float offset = (board - 1.5f) * 0.247f;
+                Color grain = Color.Lerp(Oak, Wood, 0.49f + board % 3 * 0.2f);
+                Part(parent, "Lid board", new Vector3(offset, 0.47f, 0), new Vector3(0.239f, 0.075f, 0.98f), grain);
+                for (int side = -1; side <= 1; side += 2)
+                {
+                    Part(parent, "End board", new Vector3(offset, 0, side * 0.47f), new Vector3(0.239f, 0.96f, 0.06f), grain);
+                    Part(parent, "Side board", new Vector3(side * 0.47f, offset, 0), new Vector3(0.07f, 0.236f, 0.96f), grain);
+                }
             }
-            for (int i = -1; i <= 1; i += 2)
+            for (int side = -1; side <= 1; side += 2)
             {
-                Part(parent, "Strap", new Vector3(i * 0.31f, 0, -0.553f), new Vector3(0.086f, 1.04f, 0.03f), Oak);
-                Part(parent, "Lid strap", new Vector3(i * 0.31f, 0.525f, 0), new Vector3(0.087f, 0.03f, 1.07f), Oak);
-                Part(parent, "Rivet", new Vector3(i * 0.31f, 0.31f, -0.58f), new Vector3(0.07f, 0.07f, 0.03f), Brass);
+                Part(parent, "End brace", new Vector3(0, 0, side * 0.51f), new Vector3(0.115f, 1.18f, 0.038f), Wood, roll: side * 39);
+                for (int band = -1; band <= 1; band += 2)
+                {
+                    Part(parent, "Forged corner strap", new Vector3(band * 0.4f, 0, side * 0.518f),
+                        new Vector3(0.105f, 1.01f, 0.037f), Iron);
+                    Part(parent, "Iron lid band", new Vector3(band * 0.4f, side * 0.5f, 0),
+                        new Vector3(0.106f, 0.04f, 1.05f), Iron);
+                    for (int row = -1; row <= 1; row += 2)
+                        Part(parent, "Peg", new Vector3(band * 0.4f, row * 0.37f, side * 0.54f),
+                            new Vector3(0.050f, 0.050f, 0.024f), Brass, roll: 45);
+                }
             }
-            Part(parent, "Brass latch", new Vector3(0, 0.35f, -0.555f), new Vector3(0.14f, 0.15f, 0.045f), Brass);
+            Part(parent, "Lock plate", new Vector3(0, 0.36f, -0.546f), new Vector3(0.17f, 0.17f, 0.035f), Brass);
+            Part(parent, "Keyhole", new Vector3(0, 0.35f, -0.568f), new Vector3(0.028f, 0.063f, 0.014f), Iron);
+        }
+
+        public void Bin(Transform parent, Vector3 position)
+        {
+            Transform root = Group(parent, "Salvage bin", position).transform;
+            Lathe(root, "Iron lining", Vector3.zero, Iron, "bin lining", new[] { (0.32f, 0.03f), (0.44f, 0.85f),
+                (0.44f, 0.89f), (0.39f, 0.89f), (0.29f, 0.15f), (0f, 0.15f) });
+            for (int i = 0; i < 14; i++)
+            {
+                float a = i * 360f / 14;
+                Quaternion turn = Quaternion.Euler(0, a, 0);
+                var stave = Part(root, "Oak stave", turn * new Vector3(0, 0.43f, 0.38f),
+                    new Vector3(0.16f, 0.82f, 0.06f), Color.Lerp(Wood, Oak, i % 3 * 0.2f));
+                stave.transform.localRotation = turn * Quaternion.Euler(8, 0, 0);
+            }
         }
 
         public ActorMotion Person(Transform parent, Color tunic, int creature = -1)

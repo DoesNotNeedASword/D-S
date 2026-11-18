@@ -22,6 +22,8 @@ namespace DungeonsNShops
         private readonly GameObject[] veins = new GameObject[GameWorld.VeinCount];
         private readonly GameObject[] traps = new GameObject[12];
         private readonly List<GameObject> enemies = new(), loot = new(), stock = new(), crates = new(), payments = new();
+        private readonly Dictionary<int, GameObject> looseCrates = new();
+        private readonly List<int> removedCrates = new();
         private readonly Dictionary<Site, TextMesh> labels = new();
         private readonly MaterialPropertyBlock colorBlock = new();
         private readonly MedievalModels models = new();
@@ -226,6 +228,9 @@ namespace DungeonsNShops
                 models.Part(shop, "Gate board", gatePosition + new Vector3(i * 0.22f, 1.04f, 0.35f),
                     new Vector3(0.21f, 2.08f - Mathf.Abs(i) * 0.11f, 0.12f), MedievalModels.Wood);
 
+            Vector3 bin = Map.SitePosition(Site.Bin);
+            models.Bin(shop, bin);
+            AddSite(Site.Bin, Stone);
             AddSite(Site.Warehouse, Teal);
             AddSite(Site.Shelf, Gold);
             AddSite(Site.Register, Gold);
@@ -338,6 +343,25 @@ namespace DungeonsNShops
             for (int i = 0; i < crates.Count; i++)
                 if ((visible & (1 << i)) == 0) crates[i].SetActive(false);
 
+            foreach (var crate in state.dropped)
+            {
+                if (!looseCrates.TryGetValue(crate.id, out GameObject box))
+                {
+                    box = Box(shop, "Dropped crate " + crate.id, crate.position, ShopTargets.CrateSize, Wood);
+                    box.GetComponent<Collider>().enabled = false;
+                    models.Crate(box.transform);
+                    looseCrates.Add(crate.id, box);
+                }
+                box.transform.SetPositionAndRotation(crate.position, Quaternion.Euler(crate.angles));
+            }
+            removedCrates.Clear();
+            foreach (var entry in looseCrates)
+                if (!state.dropped.Exists(c => c.id == entry.Key)) removedCrates.Add(entry.Key);
+            foreach (int id in removedCrates)
+            {
+                UnityEngine.Object.Destroy(looseCrates[id]);
+                looseCrates.Remove(id);
+            }
             Customer visitor = state.customer;
             RenderPayments(visitor);
             customer.SetActive(visitor?.id > 0);

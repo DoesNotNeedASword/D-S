@@ -21,6 +21,7 @@ namespace DungeonsNShops
             Site.Bed => new(-7, 0, -8),
             Site.Decor => new(6, 0, -8),
             Site.Sign => new(1.9f, 0, 4.65f),
+            Site.Bin => new(-4.6f, 0, -0.8f),
             Site.Exit => new(0, 0, 0),
             _ => Vector3.zero
         };

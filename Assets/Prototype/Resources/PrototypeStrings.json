@@ -622,13 +622,13 @@
     },
     {
       "key": "hud.shopControls",
-      "ru": "WASD · {0} действие · {1} взять единицу / предмет · {2} ящик · {3} рюкзак",
-      "en": "WASD · {0} interact · {1} take one / use item · {2} crate · {3} backpack"
+      "ru": "{0} действие · {1} взять товар · {2} бросить ящик · {3} рюкзак",
+      "en": "{0} interact · {1} take goods · {2} throw crate · {3} backpack"
     },
     {
       "key": "hud.crateActive",
-      "ru": "[{0}] Ящик в руках · {1} ×{2}",
-      "en": "[{0}] Crate in hand · {1} ×{2}"
+      "ru": "В руках {1} ×{2}  ·  [{0}] бросить",
+      "en": "Carrying {1} ×{2}  ·  [{0}] throw"
     },
     {
       "key": "hud.crateStored",
@@ -914,6 +914,31 @@
       "key": "belt.expand",
       "ru": "Добавить карман {0} за {1}",
       "en": "Buy pocket {0} for {1}"
+    },
+    {
+      "key": "site.Bin",
+      "ru": "Утиль",
+      "en": "Discard bin"
+    },
+    {
+      "key": "hud.discard",
+      "ru": "[{0}] Выбросить ящик вместе с содержимым",
+      "en": "[{0}] Discard the crate and its contents"
+    },
+    {
+      "key": "hud.throw",
+      "ru": "[{0}] Бросить ящик",
+      "en": "[{0}] Throw crate"
+    },
+    {
+      "key": "error.handsBusy",
+      "ru": "Сначала освободите руки.",
+      "en": "Set down the crate first."
+    },
+    {
+      "key": "bind.Crate",
+      "ru": "Бросить ящик",
+      "en": "Throw crate"
     }
   ]
 }
