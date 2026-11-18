@@ -106,7 +106,7 @@ namespace DungeonsNShops
             foreach (ShelfStock line in world.shelf.stock)
             {
                 int item = line.item;
-                ui.Label(list, T("price.details", ItemName(item), line.count, Catalog.Get(item).ShelfSize,
+                ui.Label(list, T("price.details", item == (int)Item.Brew ? Effects(line.formula) : ItemName(item), line.count, Catalog.Get(item).ShelfSize,
                     Currency(world.market[item]), Currency(GameWorld.ShelfPrice(world, line))) +
                     " · " + T(line.marketPrice ? "price.auto" : "price.manual"), 38);
                 RectTransform denominations = ui.Row(list, 36);
@@ -118,9 +118,9 @@ namespace DungeonsNShops
                 UnityEngine.UI.InputField copper = ui.Field(denominations, (line.manualPrice % 100).ToString(), "", true);
 
                 RectTransform row = ui.Row(list, 36);
-                Button(row, "price.apply", () => command(ActionKind.Price, item, ParsePrice(gold.text, silver.text, copper.text)));
-                Act(row, "price.auto", ActionKind.Price, item, -line.manualPrice);
-                Act(row, "price.retrieve", ActionKind.Retrieve, item);
+                Button(row, "price.apply", () => command(ActionKind.Price, line.Key, ParsePrice(gold.text, silver.text, copper.text)));
+                Act(row, "price.auto", ActionKind.Price, line.Key, -line.manualPrice);
+                Act(row, "price.retrieve", ActionKind.Retrieve, line.Key);
             }
         }
 
@@ -142,8 +142,8 @@ namespace DungeonsNShops
                 int selectedItem = item;
                 int available = player.Count(item);
                 ingredients[item] = Mathf.Min(ingredients[item], available);
-                ui.Label(panel, T("bench.effects", ItemName(item), ItemName((int)GameWorld.ReagentEffect((Item)item, false)),
-                    ItemName((int)GameWorld.ReagentEffect((Item)item, true))), 28, 16);
+                ui.Label(panel, T("bench.effects", ItemName(item), Effects(PotionEffects.Ingredient((Item)item, false)),
+                    Effects(PotionEffects.Ingredient((Item)item, true))), 28, 16);
                 RectTransform row = ui.Row(panel, 40);
                 quantities[item] = ui.Label(row, "");
                 ui.Button(row, "−", () =>
@@ -182,6 +182,7 @@ namespace DungeonsNShops
                 ui.Label(list, T("warehouse.wait", ItemName(delivery.crate.item), delivery.crate.count, Currency(delivery.paid)));
             for (int item = 0; item < Catalog.Count; item++)
             {
+                if (item == (int)Item.Brew) continue;
                 int selection = item;
                 RectTransform row = ui.Row(list, 37);
                 ui.Label(row, ItemName(item));

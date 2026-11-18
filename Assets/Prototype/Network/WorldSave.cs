@@ -65,6 +65,15 @@ namespace DungeonsNShops
                 return null;
             if (state.version == WorldState.CurrentVersion)
                 return state.market.Length == Catalog.Count ? state : null;
+            if (state.version == 5 && state.market.Length == 14)
+            {
+                Array.Resize(ref state.market, Catalog.Count);
+                state.market[(int)Item.Brew] = Catalog.Get((int)Item.Brew).BaseValue;
+                foreach (var player in state.players) player.armorPower = player.ward > 0 ? 40 : 0;
+                state.craft = null;
+                state.version = WorldState.CurrentVersion;
+                return state;
+            }
             if (state.version is < 1 or > 4 || state.market.Length != (state.version == 4 ? 14 : state.version == 3 ? 13 : 10)) return null;
             LegacySave legacy = JsonUtility.FromJson<LegacySave>(json);
             if (state.version == 1) UpgradeShelf(state, legacy?.shelf);
@@ -79,6 +88,7 @@ namespace DungeonsNShops
                 player.inventory = new();
                 player.quickSlots = InventoryLayout.StartingSlots;
                 player.selected = 0;
+                player.armorPower = player.ward > 0 ? 40 : 0;
                 var bag = old.bag ?? Array.Empty<int>();
                 void Equip(int item, int cell)
                 {

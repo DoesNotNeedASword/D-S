@@ -8,6 +8,7 @@ namespace DungeonsNShops
     public sealed class InventoryStack
     {
         public int item, count, cell, unsecured;
+        public PotionEffects formula, coating;
     }
 
     internal static class InventoryLayout
@@ -63,14 +64,14 @@ namespace DungeonsNShops
         }
 
         // Atomic for multi-unit pickups. Failed placement leaves both inventory and loot source intact.
-        public static bool Add(PlayerState player, int item, int count, bool unsecured = false)
+        public static bool Add(PlayerState player, int item, int count, bool unsecured = false, PotionEffects formula = default)
         {
             if (!Catalog.Valid(item) || count <= 0) return false;
             var changes = new List<(InventoryStack stack, int added)>();
             int limit = Limit(item);
             foreach (var stack in player.inventory)
             {
-                if (stack.item != item || stack.count >= limit) continue;
+                if (stack.item != item || !stack.formula.Equals(formula) || stack.count >= limit) continue;
                 int added = Math.Min(count, limit - stack.count);
                 stack.count += added;
                 if (unsecured) stack.unsecured += added;
@@ -92,7 +93,7 @@ namespace DungeonsNShops
                     return false;
                 }
                 int added = Math.Min(count, limit);
-                var stack = new InventoryStack { item = item, count = added, cell = cell, unsecured = unsecured ? added : 0 };
+                var stack = new InventoryStack { item = item, count = added, cell = cell, formula = formula, unsecured = unsecured ? added : 0 };
                 player.inventory.Add(stack);
                 changes.Add((stack, added));
                 count -= added;

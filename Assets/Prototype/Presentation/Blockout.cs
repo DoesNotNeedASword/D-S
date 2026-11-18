@@ -316,8 +316,9 @@ namespace DungeonsNShops
                 {
                     GameObject product = stock[units++];
                     product.SetActive(true);
-                    product.transform.position = new Vector3(-3.93f + (used + size / 2f) * 0.155f, 1.04f, 1.94f);
-                    product.transform.localScale = new Vector3(size * 0.155f - 0.02f, size >= 4 ? 0.12f : 0.19f, 0.36f);
+                    Bounds bounds = ShopTargets.Product(used, size);
+                    product.transform.position = bounds.center;
+                    product.transform.localScale = bounds.size;
                     DisplayItem(product, line.item);
                     used += size;
                 }

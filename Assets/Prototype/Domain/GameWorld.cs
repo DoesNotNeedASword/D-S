@@ -115,7 +115,7 @@ namespace DungeonsNShops
                 or ActionKind.DiscardCrate or ActionKind.Stock or ActionKind.TakeCrate);
             string error = handsBusy ? "error.handsBusy" : action.kind switch
             {
-                ActionKind.Select or ActionKind.Offhand or ActionKind.Use or ActionKind.MoveInventory => Equipment(player, action),
+                ActionKind.Select or ActionKind.Offhand or ActionKind.Use or ActionKind.CoatWeapon or ActionKind.MoveInventory => Equipment(player, action),
                 ActionKind.Enter or ActionKind.Exit or ActionKind.Strike or ActionKind.Loot => Expedition(player, control, action),
                 ActionKind.BeginCraft or ActionKind.CraftZone or ActionKind.GrindIngredient or ActionKind.AddIngredient or
                     ActionKind.Stir or ActionKind.FinishCraft or ActionKind.CancelCraft => Craft(player, action),

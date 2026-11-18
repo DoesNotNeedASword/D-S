@@ -36,6 +36,10 @@ namespace DungeonsNShops
         public static Vector3 CratePosition(int slot) =>
             new(slot % 2 == 0 ? -8.22f : -6.03f, 1.16f + slot / 12 * 0.54f, 1.15f + slot / 2 % 6 * 1.02f);
 
+        public static Bounds Product(int used, int size) => new(
+            new Vector3(-3.93f + (used + size / 2f) * 0.155f, 1.055f, 1.94f),
+            new Vector3(size * 0.155f - 0.015f, size >= 4 ? 0.15f : 0.22f, 0.36f));
+
         public static Vector3 CoinPosition(int index) =>
             new(-0.94f + index % 10 * 0.209f, 1.02f, 4.8f + index / 10 * 0.17f);
 
@@ -111,6 +115,21 @@ namespace DungeonsNShops
                 Consider(Station(site), new ShopTarget(ShopTargetKind.Site, site));
             }
 
+            if (target.Site == Site.Shelf && !holdingCrate)
+            {
+                int used = 0;
+                float productDistance = Range;
+                foreach (ShelfStock line in world.shelf.stock)
+                {
+                    int size = Catalog.Get(line.item).ShelfSize;
+                    for (int unit = 0; unit < line.count; unit++, used += size)
+                        if (Product(used, size).IntersectRay(ray, out float hit) && hit < productDistance)
+                        {
+                            productDistance = hit;
+                            target = new ShopTarget(ShopTargetKind.Site, Site.Shelf, line.Key, 1);
+                        }
+                }
+            }
             return target;
         }
     }

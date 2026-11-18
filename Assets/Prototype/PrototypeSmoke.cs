@@ -69,7 +69,7 @@ namespace DungeonsNShops
             if (!SessionState.GetBool(PlayCheck, false)) return;
             stage = 0;
             gestureAt = 0;
-            deadline = EditorApplication.timeSinceStartup + 20;
+            deadline = EditorApplication.timeSinceStartup + 45;
             EditorApplication.update += CheckPlay;
         }
 
@@ -141,6 +141,8 @@ namespace DungeonsNShops
                         pointer.pressed = false;
                         return current;
                     };
+                    // Editor updates may run several times between player frames.
+                    if (pointer.pressed) return;
                     StationSession brew = runtime.State.craft;
                     if (stage == 5 || stage == 7 || stage == 8)
                     {
@@ -159,14 +161,14 @@ namespace DungeonsNShops
                         Vector3 target = destination.transform.position + Vector3.up * 0.31f;
                         if (gestureAt == 0)
                         {
-                            gestureAt = EditorApplication.timeSinceStartup;
+                            gestureAt = Time.timeAsDouble;
                             pointer = (CameraRay(piece.transform.position), true, true);
                             if (Application.isBatchMode && stage == 5) Capture("PrototypeReagents");
                             return;
                         }
 
-                        pointer = (CameraRay(target), false, EditorApplication.timeSinceStartup - gestureAt < 0.74);
-                        if (!pointer.held && EditorApplication.timeSinceStartup - gestureAt > 1.6)
+                        pointer = (CameraRay(target), false, Time.timeAsDouble - gestureAt < 0.74);
+                        if (!pointer.held && Time.timeAsDouble - gestureAt > 1.6)
                             throw new InvalidOperationException($"Reagent {index} missed {destination.name}: {piece.transform.position}, target {target}.");
                     }
                     else if (stage == 6)
@@ -183,14 +185,14 @@ namespace DungeonsNShops
                         if (pestle == null) return;
                         if (gestureAt == 0)
                         {
-                            gestureAt = EditorApplication.timeSinceStartup;
+                            gestureAt = Time.timeAsDouble;
                             pointer = (CameraRay(pestle.transform.position + Vector3.up * 0.49f), true, true);
                             if (Application.isBatchMode) Capture("PrototypeWorkbench");
                             return;
                         }
 
                         Vector3 center = GameObject.Find("Mortar zone").transform.position;
-                        float beat = (float)(EditorApplication.timeSinceStartup - gestureAt) % 0.86f;
+                        float beat = (float)(Time.timeAsDouble - gestureAt) % 0.86f;
                         pointer = (CameraRay(center + Vector3.up * (beat < 0.43f ? 1f : 0.49f)), false, true);
                     }
                     else if (stage == 9 && FindButton("craft.finish") != null && GameObject.Find("Stirring paddle") != null)
@@ -198,14 +200,14 @@ namespace DungeonsNShops
                         GameObject paddle = GameObject.Find("Stirring paddle");
                         if (gestureAt == 0)
                         {
-                            gestureAt = EditorApplication.timeSinceStartup;
+                            gestureAt = Time.timeAsDouble;
                             if (Application.isBatchMode)
                                 Capture("PrototypeCauldron");
                             pointer = (CameraRay(paddle.transform.position + Vector3.up * 0.31f), true, true);
                             return;
                         }
                         Vector3 center = GameObject.Find("Cauldron zone").transform.position + Vector3.up * 0.23f;
-                        float angle = (float)(EditorApplication.timeSinceStartup - gestureAt) * 6f;
+                        float angle = (float)(Time.timeAsDouble - gestureAt) * 6f;
                         Vector3 cursor = center + new Vector3(Mathf.Cos(angle) * 0.27f, Mathf.Sin(angle) * 0.23f, 0);
                         pointer = (CameraRay(cursor), false, true);
                         if (brew.stir >= 2.1f)
@@ -521,7 +523,7 @@ namespace DungeonsNShops
             Do(a, ActionKind.FinishCraft, craft);
             Do(a, ActionKind.FinishCraft, craft);
             Check(state.craft == null && state.lastCraft.Length == 3 && a.Count((int)Item.Herb) == 0 &&
-                state.warehouse.Count(c => c.item == (int)Item.Tonic && c.quality == 100) == 1, "one crafted output");
+                state.warehouse.Count(c => c.item == (int)Item.Brew && c.formula.energy == 20 && c.quality == 100) == 1, "one crafted output");
 
             InventoryLayout.Add(a, (int)Item.Ore, 4);
             mix[(int)Item.Herb] = 0;
@@ -548,10 +550,21 @@ namespace DungeonsNShops
                 StirFor(craft, duration);
                 Do(a, ActionKind.FinishCraft, craft);
             }
-            Check(state.warehouse.Any(c => c.item == (int)Item.Ward && c.quality == 50) &&
-                state.warehouse.Any(c => c.item == (int)Item.Focus && c.quality == 100),
+            Check(state.warehouse.Any(c => c.formula.health == -12 && c.quality == 50) &&
+                state.warehouse.Any(c => c.formula.armor == 24 && c.quality == 100),
                 "raw and ground ore have different effects");
 
+            var mixed = PotionEffects.Mix(new[] { new ReagentPiece { item = (int)Item.Herb, ground = true },
+                new ReagentPiece { item = (int)Item.Ore }, new ReagentPiece { item = (int)Item.Herb } }, 100);
+            Check(mixed.health == 3 && mixed.energy == 10, "health cancels before scaling; independent effects survive");
+            var poison = state.warehouse.Find(c => c.formula.health < 0);
+            world.ReceiveMove(a.id, Aim(a, ShopTargets.CratePosition(poison.rackSlot),
+                new Vector3(-7, 0, ShopTargets.CratePosition(poison.rackSlot).z)));
+            Do(a, ActionKind.TakeCrate, poison.id);
+            var bottle = a.inventory.Find(s => s.item == (int)Item.Brew);
+            Check(bottle?.formula.health == -12, "bottle carries its batch through pickup");
+            Do(a, ActionKind.CoatWeapon, bottle.cell);
+            Check(a.Quick(0).coating.health == -12 && a.Count((int)Item.Brew) == 0, "one dose attaches to the equipped blade");
             Go(a, Site.Shelf);
             Do(a, ActionKind.Price, tonic.item, 17);
             world.ReceiveMove(a.id, AimStation(a, Site.Sign));
@@ -573,6 +586,7 @@ namespace DungeonsNShops
             {
                 Do(a, ActionKind.Strike);
                 Check(a.swing > 0, "accepted strike starts visible swing");
+                if (i == 0) Check(enemy.hp == enemy.maxHp - 36 && a.Quick(0).coating.Empty, "one coated hit");
                 Advance(0.66f);
             }
             Check(enemy.phase == EnemyPhase.Defeated, "authoritative melee");

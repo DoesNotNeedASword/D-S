@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace DungeonsNShops
 {
-    public enum Item { Tonic, Herb, Blade, Shield, Coat, Trap, Greatblade, Ore, Ember, Focus, Boots, Leggings, Helm, Ward }
+    public enum Item { Tonic, Herb, Blade, Shield, Coat, Trap, Greatblade, Ore, Ember, Focus, Boots, Leggings, Helm, Ward, Brew }
     public enum ArmorSlot { Feet, Legs, Torso, Head }
     public enum DayPhase { Preparation, Trading, Night }
     public enum NightChoice { Free, Working, Raiding, Sleeping }
@@ -18,7 +18,7 @@ namespace DungeonsNShops
     {
         Stock, TakeCrate, Retrieve, Price, Open, Sell, Close, Order, Loan, Repay,
         BeginCraft, CraftZone, Stir, FinishCraft, CancelCraft, Enter, Exit, Sleep, Ready, Select,
-        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient, ExpandBelt, DropCrate, DiscardCrate
+        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient, ExpandBelt, DropCrate, DiscardCrate, CoatWeapon
     }
 
     public readonly struct ItemDefinition
@@ -43,10 +43,10 @@ namespace DungeonsNShops
         {
             new(14), new(6), new(24, 24, shelfSize: 4), new(18, shelfSize: 3), new(25, shelfSize: 3),
             new(12, shelfSize: 2), new(42, 38, true, 6), new(10), new(36), new(24),
-            new(16, shelfSize: 2), new(21, shelfSize: 3), new(19, shelfSize: 2), new(26)
+            new(16, shelfSize: 2), new(21, shelfSize: 3), new(19, shelfSize: 2), new(26), new(20)
         };
 
-        public const int Count = 14;
+        public const int Count = 15;
         public static bool Valid(int item) => item >= 0 && item < Count;
         public static ItemDefinition Get(int item) => Items[item];
         public static bool IsIngredient(int item) => item is (int)Item.Herb or (int)Item.Ore or (int)Item.Ember;
@@ -89,6 +89,7 @@ namespace DungeonsNShops
         public float yaw, pitch;
         public bool crouched, guarding;
         public float swing, ward;
+        public int armorPower;
         public int selected;
         public int quickSlots = InventoryLayout.StartingSlots;
         public List<InventoryStack> inventory = new();
@@ -118,6 +119,7 @@ namespace DungeonsNShops
     {
         public int id, item, count, unitCost, quality;
         public int rackSlot = -1;
+        public PotionEffects formula;
         public Vector3 position, angles, velocity, spin;
     }
 
@@ -147,14 +149,17 @@ namespace DungeonsNShops
     [Serializable]
     public sealed class ShelfStock
     {
-        public int item, count, manualPrice;
+        public int item, count, manualPrice, batch;
+        public PotionEffects formula;
+        public int Key => batch > 0 ? Catalog.Count + batch : item;
         public bool marketPrice = true;
     }
 
     [Serializable]
     public sealed class PurchaseLine
     {
-        public int item, count, unitPrice;
+        public int item, count, unitPrice, batch;
+        public int Key => batch > 0 ? Catalog.Count + batch : item;
     }
 
     [Serializable]
@@ -191,7 +196,7 @@ namespace DungeonsNShops
         public string owner;
         public CraftStep step = CraftStep.Ingredients;
         public float elapsed, stir;
-        public float lastStirSample;
+        public float lastStirSample, boilStart;
         public int[] ingredients;
         public List<ReagentPiece> pieces = new();
         public System.Collections.Generic.List<CraftEvent> journal = new();
@@ -202,7 +207,8 @@ namespace DungeonsNShops
     {
         public Vector3 position;
         public float hp, maxHp, remaining, stun;
-        public float yaw, swing;
+        public float yaw, swing, ward;
+        public int armorPower;
         public int kind;
         public EnemyPhase phase;
         public string target;
@@ -223,7 +229,7 @@ namespace DungeonsNShops
     [Serializable]
     public sealed class WorldState
     {
-        public const int CurrentVersion = 5;
+        public const int CurrentVersion = 6;
         public int version = CurrentVersion;
         public int day = 1, money = 120, debt = 50, arrears, lastTax, lastPayment, nextId = 1;
         public DayPhase phase;

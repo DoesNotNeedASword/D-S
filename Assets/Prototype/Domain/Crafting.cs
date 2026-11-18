@@ -8,14 +8,6 @@ namespace DungeonsNShops
         public const int MaxReagents = 6;
         public const int PressesToGrind = 3;
 
-        public static Item ReagentEffect(Item item, bool ground) => item switch
-        {
-            Item.Herb => ground ? Item.Focus : Item.Tonic,
-            Item.Ore => ground ? Item.Focus : Item.Ward,
-            Item.Ember => ground ? Item.Ward : Item.Focus,
-            _ => Item.Tonic
-        };
-
         private string Craft(PlayerState player, GameAction action)
         {
             if (action.kind == ActionKind.BeginCraft)
@@ -96,7 +88,7 @@ namespace DungeonsNShops
                     if (session.pieces.All(p => p.stage == ReagentStage.Pot))
                     {
                         session.step = CraftStep.Stir;
-                        session.lastStirSample = session.elapsed;
+                        session.boilStart = session.lastStirSample = session.elapsed;
                     }
                     break;
             }
@@ -124,25 +116,15 @@ namespace DungeonsNShops
             Record(session, CraftStep.Stir, -1);
             State.lastCraft = session.journal.ToArray();
             bool wellStirred = session.stir >= balance.stirSeconds && session.stir <= balance.stirSeconds + 2;
-            int quality = wellStirred ? (session.elapsed <= 45 ? 100 : 80) : 50;
+            int quality = wellStirred ? (session.elapsed - session.boilStart <= 8 ? 100 : 80) : 50;
             State.craftQuality = quality;
-            int[] strengths = new int[Catalog.Count];
-            foreach (ReagentPiece piece in session.pieces)
-                strengths[(int)ReagentEffect((Item)piece.item, piece.ground)] += piece.item == (int)Item.Ember ? 3 : 2;
-            Item product = Item.Tonic;
-            foreach (Item option in new[] { Item.Focus, Item.Ward })
-                if (strengths[(int)option] > strengths[(int)product]) product = option;
+            PotionEffects formula = PotionEffects.Mix(session.pieces, quality);
 
             for (int item = 0; item < session.ingredients.Length; item++)
                 InventoryLayout.Consume(player, item, session.ingredients[item]);
-            AddCrate((int)product, 1, 0, quality);
+            AddCrate((int)Item.Brew, 1, 0, quality, formula);
             State.craft = null;
-            Notify(player, product switch
-            {
-                Item.Focus => "notice.craftedFocus",
-                Item.Ward => "notice.craftedWard",
-                _ => "notice.crafted"
-            });
+            Notify(player, "notice.blend");
         }
 
         private void TickCraft(float delta)

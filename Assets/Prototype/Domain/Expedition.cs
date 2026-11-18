@@ -23,38 +23,50 @@ namespace DungeonsNShops
             {
                 case ActionKind.Select:
                     if (action.value < 0 || action.value >= player.quickSlots) return "error.beltLocked";
+                    if (action.value >= 2 && player.Quick(action.value) is { } quick &&
+                        (PotionEffects.IsBottle(quick.item) || quick.item == (int)Item.Trap))
+                        return UseItem(player, quick);
                     player.selected = action.value;
                     return null;
                 case ActionKind.MoveInventory:
                     return InventoryLayout.Move(player, action.value, action.extra);
                 case ActionKind.Use:
-                    switch ((Item)player.Main)
-                    {
-                        case Item.Tonic:
-                            if (player.hp >= 100) return "error.fullHp";
-                            player.hp = Mathf.Min(100, player.hp + 40);
-                            break;
-                        case Item.Focus:
-                            if (player.ep >= 100) return "error.fullEp";
-                            player.ep = Mathf.Min(100, player.ep + 20);
-                            break;
-                        case Item.Ward:
-                            if (player.ward > 0) return "error.ward";
-                            player.ward = 18;
-                            break;
-                        case Item.Trap:
-                            if (player.zone != Zone.Raid || State.raid.traps.Count >= 12) return "error.trap";
-                            State.raid.traps.Add(player.position);
-                            break;
-                        default:
-                            return "error.use";
-                    }
-
-                    InventoryLayout.Consume(player, player.Quick(player.selected), 1);
+                    return UseItem(player, player.Quick(player.selected));
+                case ActionKind.CoatWeapon:
+                    var bottle = InventoryLayout.At(player, action.value);
+                    var weapon = player.Quick(action.extra == 1 ? 1 : 0);
+                    if (bottle == null || !PotionEffects.IsBottle(bottle.item) || weapon == null ||
+                        Catalog.Get(weapon.item).Damage == 0) return "error.use";
+                    var coating = PotionEffects.Bottle(bottle.item, bottle.formula);
+                    if (coating.Empty || !weapon.coating.Empty) return "error.coating";
+                    weapon.coating = coating;
+                    InventoryLayout.Consume(player, bottle, 1);
                     return null;
-                default:
-                    return "error.use";
+                default: return "error.use";
             }
+        }
+
+        private string UseItem(PlayerState player, InventoryStack stack)
+        {
+            if (stack == null) return "error.use";
+            if (stack.item == (int)Item.Trap)
+            {
+                if (player.zone != Zone.Raid || State.raid.traps.Count >= 12) return "error.trap";
+                State.raid.traps.Add(player.position);
+            }
+            else
+            {
+                if (!PotionEffects.IsBottle(stack.item)) return "error.use";
+                var effect = PotionEffects.Bottle(stack.item, stack.formula);
+                if (effect.health > 0 && player.hp >= 100 && effect.energy == 0 && effect.armor == 0) return "error.fullHp";
+                if (effect.energy > 0 && player.ep >= 100 && effect.health == 0 && effect.armor == 0) return "error.fullEp";
+                player.hp = Mathf.Clamp(player.hp + effect.health, 0, 100);
+                player.ep = Mathf.Clamp(player.ep + effect.energy, 0, 100);
+                if (effect.armor != 0) { player.armorPower = effect.armor; player.ward = 18; }
+            }
+            InventoryLayout.Consume(player, stack, 1);
+            if (player.hp <= 0) Defeat(player);
+            return null;
         }
 
         private string Expedition(PlayerState player, Controls control, GameAction action)
@@ -157,7 +169,18 @@ namespace DungeonsNShops
 
             if (nearest == null) return;
             int damage = player.Main < 0 ? 7 : Mathf.Max(7, Catalog.Get(player.Main).Damage);
-            Hurt(nearest, damage);
+            var weapon = player.Quick(player.selected);
+            var coating = weapon?.coating ?? default;
+            if (weapon != null) weapon.coating = default;
+            float factor = nearest.ward > 0 ? 1 - Mathf.Clamp(nearest.armorPower, -80, 80) / 100f : 1;
+            nearest.hp = Mathf.Min(nearest.maxHp, nearest.hp + Mathf.Max(0, coating.health));
+            Hurt(nearest, damage * factor + Mathf.Max(0, -coating.health));
+            if (nearest.phase != EnemyPhase.Defeated)
+            {
+                if (coating.armor != 0) { nearest.armorPower = coating.armor; nearest.ward = 18; }
+                if (coating.energy < 0) nearest.stun += -coating.energy * 0.08f;
+                if (coating.energy > 0) nearest.remaining = Mathf.Max(0, nearest.remaining - coating.energy * 0.08f);
+            }
         }
 
         private string Loot(PlayerState player, int index)
@@ -251,6 +274,7 @@ namespace DungeonsNShops
 
         private void TickEnemy(RaidState raid, Enemy enemy, float delta)
         {
+            enemy.ward = Mathf.Max(0, enemy.ward - delta);
             enemy.swing = Mathf.Max(0, enemy.swing - delta);
             for (int i = raid.traps.Count - 1; i >= 0; i--)
             {
@@ -342,7 +366,7 @@ namespace DungeonsNShops
             Controls control = controls[player.id];
             Vector3 forward = Quaternion.Euler(0, player.yaw, 0) * Vector3.forward;
             float damage = enemy.kind == 2 ? (player.HasCoat ? 11 : 35) : enemy.kind == 1 ? 13 : 16;
-            if (player.ward > 0) damage *= 0.6f;
+            if (player.ward > 0) damage *= 1 - Mathf.Clamp(player.armorPower, -80, 80) / 100f;
             foreach (var stack in player.inventory)
                 if (stack.cell >= InventoryLayout.ArmorStart && stack.cell != InventoryLayout.ArmorStart + (int)ArmorSlot.Torso) damage *= 0.92f;
             if (control.blocking && control.input.block &&
@@ -354,8 +378,13 @@ namespace DungeonsNShops
 
             player.hp = Mathf.Max(0, player.hp - damage);
             if (player.hp > 0) return;
+            Defeat(player);
+        }
+
+        private void Defeat(PlayerState player)
+        {
             ReturnToShop(player, false);
-            control.expires = 0;
+            controls[player.id].expires = 0;
             player.hp = 65;
             player.ep = Mathf.Max(0, player.ep - 5);
             Notify(player, "notice.defeated");

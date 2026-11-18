@@ -16,6 +16,8 @@ namespace DungeonsNShops
         private readonly UnityEngine.UI.Image[] slotColors = new UnityEngine.UI.Image[InventoryLayout.HotbarSize];
         private readonly UnityEngine.UI.Text[] meters = new UnityEngine.UI.Text[3];
         private readonly RectTransform[] fills = new RectTransform[3];
+        private readonly RectTransform tooltip;
+        private readonly UnityEngine.UI.Text tooltipText;
         private readonly Balance balance;
         private ScreenMode mode;
         private Site site;
@@ -76,6 +78,13 @@ namespace DungeonsNShops
             notice = ui.Text(toast, "", 19, TextAnchor.MiddleCenter);
             UiFactory.Stretch(notice.rectTransform, Vector2.zero, Vector2.zero);
             AddOutline(notice);
+            tooltip = ui.Box(canvas.transform, "Item information", new Color(0.085f, 0.06f, 0.04f, 0.89f));
+            tooltip.GetComponent<UnityEngine.UI.Image>().raycastTarget = false;
+            tooltip.pivot = new Vector2(0, 1);
+            tooltip.sizeDelta = new Vector2(305, 100);
+            tooltipText = ui.Text(tooltip, "", 16, TextAnchor.MiddleLeft);
+            UiFactory.Stretch(tooltipText.rectTransform, new Vector2(12, 5), new Vector2(-10, -5));
+            tooltip.gameObject.SetActive(false);
         }
 
         private string T(string key, params object[] values) => language.Text(key, values);
@@ -95,6 +104,7 @@ namespace DungeonsNShops
         {
             mode = next;
             hoveredCell = null;
+            tooltip.gameObject.SetActive(false);
             ClearGhost();
             site = selectedSite;
             contentStamp = int.MinValue;
@@ -173,6 +183,13 @@ namespace DungeonsNShops
                 }
             }
 
+            if (mode == ScreenMode.Play)
+            {
+                var stock = focus.Site == Site.Shelf && focus.Index == 1 ? world.shelf.stock.Find(s => s.Key == focus.Id) : null;
+                if (stock != null) ShowItemInfo(stock.item, stock.formula, stock.count, default,
+                    new Vector2(Screen.width * 0.52f, Screen.height * 0.54f), GameWorld.ShelfPrice(world, stock));
+                else tooltip.gameObject.SetActive(false);
+            }
             prompt.text = target;
             raidHint.text = "";
             if (inRaid && mode == ScreenMode.Play)

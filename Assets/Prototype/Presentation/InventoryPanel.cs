@@ -66,7 +66,14 @@ namespace DungeonsNShops
             RectTransform rect = ui.Box(parent, "Inventory cell " + index, UiFactory.Accent);
             InventoryCell cell = rect.gameObject.AddComponent<InventoryCell>();
             cell.Index = index;
-            cell.Drop = (from, to) => command(ActionKind.MoveInventory, from, to);
+            cell.Coat = from => command(ActionKind.CoatWeapon, from, 0);
+            cell.Drop = (from, to) =>
+            {
+                int hand = to - InventoryLayout.HotbarStart;
+                bool coat = hand is 0 or 1 && PotionEffects.IsBottle(inventoryCells[from].Item) &&
+                    Catalog.Valid(inventoryCells[to].Item) && Catalog.Get(inventoryCells[to].Item).Damage > 0;
+                command(coat ? ActionKind.CoatWeapon : ActionKind.MoveInventory, from, coat ? hand : to);
+            };
             cell.Drag = MoveGhost;
             cell.EndDrag = ClearGhost;
             cell.Hover = (target, entered) =>
@@ -107,6 +114,14 @@ namespace DungeonsNShops
                 inventoryLabels[i].text = label + "\n" + title;
             }
             inventoryHint.text = T("inventory.hint");
+            var hovered = hoveredCell == null ? null : InventoryLayout.At(player, hoveredCell.Index);
+            if (hovered == null || dragLabel != null && dragLabel.gameObject.activeSelf)
+                tooltip.gameObject.SetActive(false);
+            else
+            {
+                Vector2 cursor = UnityEngine.InputSystem.Mouse.current?.position.ReadValue() ?? Vector2.zero;
+                ShowItemInfo(hovered.item, hovered.formula, hovered.count, hovered.coating, cursor);
+            }
         }
 
         private void MoveGhost(InventoryCell source, Vector2 position)

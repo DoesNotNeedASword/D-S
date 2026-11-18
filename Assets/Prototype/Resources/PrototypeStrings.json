@@ -939,6 +939,66 @@
       "key": "bind.Crate",
       "ru": "Бросить ящик",
       "en": "Throw crate"
+    },
+    {
+      "key": "item.14",
+      "ru": "Алхимическая смесь",
+      "en": "Alchemical blend"
+    },
+    {
+      "key": "effect.hp",
+      "ru": "Здоровье",
+      "en": "Health"
+    },
+    {
+      "key": "effect.energy",
+      "ru": "Бодрость",
+      "en": "Energy"
+    },
+    {
+      "key": "effect.armor",
+      "ru": "Защита (%)",
+      "en": "Armor (%)"
+    },
+    {
+      "key": "effect.inert",
+      "ru": "Нейтральный состав",
+      "en": "Neutral blend"
+    },
+    {
+      "key": "item.dimensions",
+      "ru": "Размер {0} × {1}  ·  Цена {2}",
+      "en": "Size {0} × {1}  ·  Price {2}"
+    },
+    {
+      "key": "item.damage",
+      "ru": "Урон оружия {0}",
+      "en": "Weapon damage {0}"
+    },
+    {
+      "key": "item.coated",
+      "ru": "Покрытие · {0}",
+      "en": "Coating · {0}"
+    },
+    {
+      "key": "item.coat",
+      "ru": "ПКМ — нанести на основное оружие",
+      "en": "RMB to coat the main weapon"
+    },
+    {
+      "key": "item.rawGround",
+      "ru": "Сырой · {0}\nТолчёный · {1}",
+      "en": "Raw · {0}\nGround · {1}"
+    },
+    {
+      "key": "notice.blend",
+      "ru": "Смесь готова. Флакон на складе.",
+      "en": "Blend complete. A bottle is on the rack."
+    },
+    {
+      "key": "error.coating",
+      "ru": "Нужно оружие без покрытия и активная смесь.",
+      "en": "Use an uncoated weapon and an active mixture."
     }
   ]
 }

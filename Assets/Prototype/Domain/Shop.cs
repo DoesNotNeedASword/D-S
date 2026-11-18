@@ -34,9 +34,9 @@ namespace DungeonsNShops
             }
         }
 
-        private void AddCrate(int item, int count, int unitCost, int quality = 0)
+        private void AddCrate(int item, int count, int unitCost, int quality = 0, PotionEffects formula = default)
         {
-            PutOnRack(new Crate { id = State.nextId++, item = item, count = count, unitCost = unitCost, quality = quality });
+            PutOnRack(new Crate { id = State.nextId++, item = item, count = count, unitCost = unitCost, quality = quality, formula = formula });
         }
 
         private void PutOnRack(Crate crate)
@@ -115,7 +115,7 @@ namespace DungeonsNShops
                     if (!own && (target.Kind != ShopTargetKind.Crate || target.Id != action.value)) return "error.reach";
                     Crate source = own ? player.carriedCrate : State.warehouse.Find(c => c.id == action.value) ?? State.dropped.Find(c => c.id == action.value);
                     if (source == null || source.count <= 0) return "error.stock";
-                    if (!InventoryLayout.Add(player, source.item, 1)) return "error.capacity";
+                    if (!InventoryLayout.Add(player, source.item, 1, formula: source.formula)) return "error.capacity";
                     source.count--;
                     break;
                 case ActionKind.PlaceCrate:
@@ -134,10 +134,10 @@ namespace DungeonsNShops
                     int room = (ShopShelf.Capacity - State.shelf.Used) / size;
                     int count = Mathf.Min(room, action.extra == 1 ? 1 : crate.count);
                     if (count <= 0) return "error.capacity";
-                    ShelfStock line = State.shelf.stock.Find(s => s.item == crate.item);
+                    ShelfStock line = State.shelf.stock.Find(s => s.item == crate.item && s.formula.Equals(crate.formula));
                     if (line == null)
                     {
-                        line = new ShelfStock { item = crate.item, manualPrice = State.market[crate.item] };
+                        line = new ShelfStock { item = crate.item, formula = crate.formula, batch = crate.item == (int)Item.Brew ? State.nextId++ : 0, manualPrice = State.market[crate.item] };
                         State.shelf.stock.Add(line);
                     }
                     line.count += count;
@@ -145,16 +145,16 @@ namespace DungeonsNShops
                     break;
                 case ActionKind.Retrieve:
                     if (!At(player, Site.Shelf)) return "error.reach";
-                    ShelfStock returned = State.shelf.stock.Find(s => s.item == action.value);
+                    ShelfStock returned = State.shelf.stock.Find(s => s.Key == action.value);
                     int reserved = State.customer?.phase == CustomerPhase.Checkout
-                        ? State.customer.cart.Find(s => s.item == action.value)?.count ?? 0 : 0;
+                        ? State.customer.cart.Find(s => s.Key == action.value)?.count ?? 0 : 0;
                     if (returned == null || returned.count <= reserved) return "error.stock";
-                    AddCrate(returned.item, returned.count - reserved, 0);
+                    AddCrate(returned.item, returned.count - reserved, 0, formula: returned.formula);
                     returned.count = reserved;
                     break;
                 case ActionKind.Price:
                     if (!At(player, Site.Shelf)) return "error.reach";
-                    ShelfStock priced = State.shelf.stock.Find(s => s.item == action.value);
+                    ShelfStock priced = State.shelf.stock.Find(s => s.Key == action.value);
                     if (priced == null || action.extra == 0 || action.extra < -Money.MaxPrice || action.extra > Money.MaxPrice)
                         return "error.price";
                     priced.manualPrice = Mathf.Abs(action.extra);
@@ -188,7 +188,7 @@ namespace DungeonsNShops
                     break;
                 case ActionKind.Order:
                     if (!At(player, Site.Supplier)) return "error.reach";
-                    if (!Catalog.Valid(action.value)) return "error.stock";
+                    if (!Catalog.Valid(action.value) || action.value == (int)Item.Brew) return "error.stock";
                     if (State.deliveries.Count >= 8) return "error.capacity";
                     int cost = OrderCost(State, action.value);
                     if (State.money < cost) return "error.money";
@@ -238,7 +238,7 @@ namespace DungeonsNShops
             if (customer.collected != (1 << customer.payment.Length) - 1) return null;
 
             foreach (PurchaseLine line in customer.cart)
-                State.shelf.stock.Find(s => s.item == line.item).count -= line.count;
+                State.shelf.stock.Find(s => s.Key == line.Key).count -= line.count;
             State.money += customer.price;
             Leave(customer);
             Notify(player, "notice.sold");
@@ -314,7 +314,7 @@ namespace DungeonsNShops
                 float chance = Mathf.Clamp01((customer.archetype == 0 ? 1.32f : 1.65f) -
                     balance.demandElasticity * Mathf.Max(0, ratio - 1));
                 if (Random.value >= chance) continue;
-                customer.cart.Add(new PurchaseLine { item = line.item, count = 1, unitPrice = price });
+                customer.cart.Add(new PurchaseLine { item = line.item, batch = line.batch, count = 1, unitPrice = price });
                 customer.price += price;
             }
 
@@ -322,7 +322,7 @@ namespace DungeonsNShops
             if (customer.cart.Count == 1)
             {
                 PurchaseLine line = customer.cart[0];
-                int available = stock.Find(s => s.item == line.item).count;
+                int available = stock.Find(s => s.Key == line.Key).count;
                 int extra = Mathf.Min(available - 1, limit - 1, (Money.MaxPrice - customer.price) / line.unitPrice);
                 line.count += extra;
                 customer.price += extra * line.unitPrice;
