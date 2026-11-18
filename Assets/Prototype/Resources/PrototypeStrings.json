@@ -177,8 +177,8 @@
     },
     {
       "key": "hud.raid",
-      "ru": "Ночь {0}  ·  Рейд #{1}\nДобыча {2}/{3}",
-      "en": "Night {0}  ·  Raid #{1}\nHaul {2}/{3}"
+      "ru": "Ночь {0}  ·  Рейд #{1}\nРюкзак {2}/{3} клеток",
+      "en": "Night {0}  ·  Raid #{1}\nBackpack {2}/{3} squares"
     },
     {
       "key": "hud.interact",
@@ -817,8 +817,8 @@
     },
     {
       "key": "inventory.hint",
-      "ru": "Перетащи предмет или наведи на него и нажми 1–0 для назначения.",
-      "en": "Drag an item, or hover over it and press 1–0 to assign it."
+      "ru": "Перетащите вещь в свободную область. Наведите на неё и нажмите номер доступной ячейки пояса.",
+      "en": "Drag an item into free space. Hover and press an unlocked belt number to equip it."
     },
     {
       "key": "error.armorSlot",
@@ -894,6 +894,26 @@
       "key": "error.ingredients",
       "ru": "Выбери от 2 до 6 доступных ингредиентов: трава, руда или уголь стража.",
       "en": "Choose two to six available reagents: herb, ore or guardian ember."
+    },
+    {
+      "key": "slot.weapon",
+      "ru": "Оружие",
+      "en": "Weapon"
+    },
+    {
+      "key": "slot.offhand",
+      "ru": "Вторая рука",
+      "en": "Off hand"
+    },
+    {
+      "key": "error.beltLocked",
+      "ru": "Ячейка пояса ещё закрыта.",
+      "en": "This belt pocket is locked."
+    },
+    {
+      "key": "belt.expand",
+      "ru": "Добавить карман {0} за {1}",
+      "en": "Buy pocket {0} for {1}"
     }
   ]
 }

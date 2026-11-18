@@ -1,105 +1,185 @@
 using System;
+using System.Collections.Generic;
+using UnityEngine;
 
 namespace DungeonsNShops
 {
+    [Serializable]
+    public sealed class InventoryStack
+    {
+        public int item, count, cell, unsecured;
+    }
+
     internal static class InventoryLayout
     {
-        public const int BackpackSize = 30;
-        public const int HotbarSize = 10;
-        public const int ArmorSize = 4;
-        public const int HotbarStart = BackpackSize;
-        public const int ArmorStart = HotbarStart + HotbarSize;
+        public const int Columns = 8, Rows = 5, BackpackSize = Columns * Rows;
+        public const int StartingSlots = 4, HotbarSize = 8, ArmorSize = 4;
+        public const int HotbarStart = BackpackSize, ArmorStart = HotbarStart + HotbarSize;
 
-        public static int[] Empty(int count)
+        public static Vector2Int Size(int item) => (Item)item switch
         {
-            int[] slots = new int[count];
-            Array.Fill(slots, -1);
-            return slots;
+            Item.Blade => new(1, 4), Item.Greatblade => new(2, 5), Item.Shield => new(2, 3),
+            Item.Coat => new(3, 2), Item.Leggings => new(2, 3), Item.Helm or Item.Trap => new(2, 2),
+            Item.Boots => new(2, 1), Item.Herb => new(1, 2), _ => Vector2Int.one
+        };
+
+        private static int Limit(int item) => Catalog.IsIngredient(item) ? 8 :
+            Catalog.Get(item).Damage > 0 || item == (int)Item.Shield || Catalog.ArmorPosition(item) >= 0 ? 1 : 4;
+
+        public static int BeltPrice(PlayerState player) => (player.quickSlots - StartingSlots + 1) * Money.Silver;
+
+        private static RectInt Footprint(int item, int cell)
+        {
+            var size = Size(item);
+            return new RectInt(cell % Columns, cell / Columns, size.x, size.y);
         }
 
-        public static void Migrate(PlayerState player, int coat)
+        public static InventoryStack At(PlayerState player, int cell)
         {
-            Array.Resize(ref player.bag, Catalog.Count);
-            Array.Resize(ref player.haul, Catalog.Count);
-            player.backpack = Empty(BackpackSize);
-            player.hotbar = Empty(HotbarSize);
-            player.equipment = Empty(ArmorSize);
-            for (int i = 0; i < HotbarSize; i++)
-                if (player.bag[i] > 0) player.hotbar[i] = i;
-            if (coat == (int)Item.Coat && player.bag[coat] > 0)
-                player.equipment[(int)ArmorSlot.Torso] = coat;
-            Sync(player);
+            if (cell < 0) return null;
+            if (cell >= BackpackSize) return player.inventory.Find(s => s.cell == cell);
+            var point = new Vector2Int(cell % Columns, cell / Columns);
+            return player.inventory.Find(s => s.cell >= 0 && s.cell < BackpackSize && Footprint(s.item, s.cell).Contains(point));
         }
 
-        public static void Sync(PlayerState player)
+        public static bool TwoHands(PlayerState player) =>
+            player.Quick(0) is { } weapon && Catalog.Get(weapon.item).TwoHanded;
+
+        private static bool Fits(PlayerState player, int item, int cell, InventoryStack moving = null)
         {
-            int seen = 0;
-            for (int i = 0; i < BackpackSize; i++)
+            if (cell < 0 || cell >= BackpackSize) return false;
+            RectInt area = Footprint(item, cell);
+            if (area.xMax > Columns || area.yMax > Rows) return false;
+            foreach (var other in player.inventory)
+                if (other != moving && other.cell >= 0 && other.cell < BackpackSize && area.Overlaps(Footprint(other.item, other.cell)))
+                    return false;
+            return true;
+        }
+
+        private static int FreeCell(PlayerState player, int item)
+        {
+            for (int i = 0; i < BackpackSize; i++) if (Fits(player, item, i)) return i;
+            return -1;
+        }
+
+        // Atomic for multi-unit pickups. Failed placement leaves both inventory and loot source intact.
+        public static bool Add(PlayerState player, int item, int count, bool unsecured = false)
+        {
+            if (!Catalog.Valid(item) || count <= 0) return false;
+            var changes = new List<(InventoryStack stack, int added)>();
+            int limit = Limit(item);
+            foreach (var stack in player.inventory)
             {
-                int item = player.backpack[i];
-                if (!Owned(player, item) || (seen & (1 << item)) != 0)
-                    player.backpack[i] = -1;
-                else seen |= 1 << item;
+                if (stack.item != item || stack.count >= limit) continue;
+                int added = Math.Min(count, limit - stack.count);
+                stack.count += added;
+                if (unsecured) stack.unsecured += added;
+                changes.Add((stack, added));
+                count -= added;
+                if (count == 0) return true;
             }
-            for (int i = 0; i < Catalog.Count; i++)
-                if (Owned(player, i) && (seen & (1 << i)) == 0)
-                    player.backpack[Array.IndexOf(player.backpack, -1)] = i;
-            for (int i = 0; i < HotbarSize; i++)
-                if (!Owned(player, player.hotbar[i])) player.hotbar[i] = -1;
-            for (int i = 0; i < ArmorSize; i++)
-                if (!Owned(player, player.equipment[i]) || Catalog.ArmorPosition(player.equipment[i]) != i)
-                    player.equipment[i] = -1;
+            while (count > 0)
+            {
+                int cell = FreeCell(player, item);
+                if (cell < 0)
+                {
+                    foreach (var change in changes)
+                    {
+                        change.stack.count -= change.added;
+                        if (unsecured) change.stack.unsecured -= change.added;
+                        if (change.stack.count == 0) player.inventory.Remove(change.stack);
+                    }
+                    return false;
+                }
+                int added = Math.Min(count, limit);
+                var stack = new InventoryStack { item = item, count = added, cell = cell, unsecured = unsecured ? added : 0 };
+                player.inventory.Add(stack);
+                changes.Add((stack, added));
+                count -= added;
+            }
+            return true;
         }
 
-        private static bool Owned(PlayerState player, int item) => Catalog.Valid(item) && player.bag[item] > 0;
+        public static void Consume(PlayerState player, InventoryStack stack, int count)
+        {
+            stack.count -= count;
+            stack.unsecured = Math.Max(0, stack.unsecured - count);
+            if (stack.count == 0) player.inventory.Remove(stack);
+        }
+
+        public static void Consume(PlayerState player, int item, int count)
+        {
+            for (int i = player.inventory.Count - 1; i >= 0 && count > 0; i--)
+            {
+                var stack = player.inventory[i];
+                if (stack.item != item) continue;
+                int used = Math.Min(count, stack.count);
+                Consume(player, stack, used);
+                count -= used;
+            }
+        }
+
+        public static void EndRaid(PlayerState player, bool extracted)
+        {
+            foreach (var stack in player.inventory)
+            {
+                if (!extracted) stack.count -= stack.unsecured;
+                stack.unsecured = 0;
+            }
+            player.inventory.RemoveAll(s => s.count == 0);
+        }
 
         public static string Move(PlayerState player, int from, int to)
         {
-            if (from < 0 || to < 0 || from >= ArmorStart + ArmorSize || to >= ArmorStart + ArmorSize)
-                return "error.stock";
-            if (from == to) return null;
-
-            int[] source = Cells(player, from, out int a);
-            int[] destination = Cells(player, to, out int b);
-            int item = source[a];
-            if (!Owned(player, item)) return "error.stock";
+            var source = At(player, from);
+            if (source == null || to < 0 || to >= ArmorStart + ArmorSize) return "error.stock";
+            if (source.cell == to) return null;
+            if (to < BackpackSize)
+            {
+                if (!Fits(player, source.item, to, source)) return "error.capacity";
+                source.cell = to;
+                return null;
+            }
             if (to >= ArmorStart)
             {
-                if (Catalog.ArmorPosition(item) != b) return "error.armorSlot";
-                destination[b] = item;
-            }
-            else if (to >= HotbarStart)
-            {
-                if (from >= ArmorStart) return "error.armorSlot";
-                if (from >= HotbarStart) source[a] = destination[b];
-                destination[b] = item;
+                if (Catalog.ArmorPosition(source.item) != to - ArmorStart) return "error.armorSlot";
             }
             else
             {
-                if (from >= HotbarStart)
-                {
-                    source[a] = -1;
-                    source = player.backpack;
-                    a = Array.IndexOf(source, item);
-                }
-                if (a >= 0) (destination[b], source[a]) = (source[a], destination[b]);
+                int slot = to - HotbarStart;
+                if (slot >= player.quickSlots) return "error.beltLocked";
+                bool weapon = Catalog.Get(source.item).Damage > 0;
+                if (slot == 0 && !weapon || slot == 1 && (TwoHands(player) ||
+                    source.item != (int)Item.Shield && (!weapon || Catalog.Get(source.item).TwoHanded)) ||
+                    slot >= 2 && (weapon || source.item == (int)Item.Shield || Catalog.ArmorPosition(source.item) >= 0))
+                    return "error.hands";
             }
 
-            if (player.Main >= 0 && Catalog.Get(player.Main).TwoHanded) player.offhand = -1;
+            var displaced = At(player, to);
+            var shield = to == HotbarStart && Catalog.Get(source.item).TwoHanded ? player.Quick(1) : null;
+            int origin = source.cell;
+            source.cell = to;
+            int displacedCell = displaced?.cell ?? -1;
+            if (displaced != null) displaced.cell = -1;
+            if (shield != null) shield.cell = -1;
+            if (displaced != null) displaced.cell = FreeCell(player, displaced.item);
+            if (shield != null) shield.cell = FreeCell(player, shield.item);
+            if (displaced?.cell == -1 || shield?.cell == -1)
+            {
+                source.cell = origin;
+                if (displaced != null) displaced.cell = displacedCell;
+                if (shield != null) shield.cell = HotbarStart + 1;
+                return "error.capacity";
+            }
             return null;
         }
 
-        private static int[] Cells(PlayerState player, int cell, out int index)
+        public static void GiveStarterKit(PlayerState player)
         {
-            index = cell;
-            if (cell < HotbarStart) return player.backpack;
-            if (cell < ArmorStart)
-            {
-                index -= HotbarStart;
-                return player.hotbar;
-            }
-            index -= ArmorStart;
-            return player.equipment;
+            player.inventory.Add(new InventoryStack { item = (int)Item.Blade, count = 1, cell = HotbarStart });
+            player.inventory.Add(new InventoryStack { item = (int)Item.Shield, count = 1, cell = HotbarStart + 1 });
+            player.inventory.Add(new InventoryStack { item = (int)Item.Tonic, count = 2, cell = HotbarStart + 2 });
+            Add(player, (int)Item.Trap, 2);
         }
     }
 }

@@ -5,7 +5,6 @@ namespace DungeonsNShops
 {
     public sealed partial class GameWorld
     {
-        public const int HaulCapacity = 12;
         private static readonly Vector3[] OreVeins =
         {
             new(-4.3f, 0, 46.5f), new(3.8f, 0, 48), new(-3.6f, 0, 52),
@@ -23,21 +22,8 @@ namespace DungeonsNShops
             switch (action.kind)
             {
                 case ActionKind.Select:
-                    if (action.value < 0 || action.value >= InventoryLayout.HotbarSize) return "error.stock";
+                    if (action.value < 0 || action.value >= player.quickSlots) return "error.beltLocked";
                     player.selected = action.value;
-                    player.crateActive = false;
-                    if (player.Main >= 0 && Catalog.Get(player.Main).TwoHanded)
-                        player.offhand = -1;
-                    return null;
-                case ActionKind.Offhand:
-                    if (player.offhand >= 0)
-                    {
-                        player.offhand = -1;
-                        return null;
-                    }
-                    if (player.bag[(int)Item.Shield] == 0 ||
-                        (player.Main >= 0 && Catalog.Get(player.Main).TwoHanded)) return "error.hands";
-                    player.offhand = (int)Item.Shield;
                     return null;
                 case ActionKind.MoveInventory:
                     return InventoryLayout.Move(player, action.value, action.extra);
@@ -64,7 +50,7 @@ namespace DungeonsNShops
                             return "error.use";
                     }
 
-                    player.bag[player.Main]--;
+                    InventoryLayout.Consume(player, player.Quick(player.selected), 1);
                     return null;
                 default:
                     return "error.use";
@@ -141,12 +127,7 @@ namespace DungeonsNShops
 
         private void ReturnToShop(PlayerState player, bool extract)
         {
-            for (int i = 0; i < Catalog.Count; i++)
-            {
-                if (extract && player.haul[i] > 0) AddCrate(i, player.haul[i], 0);
-                player.haul[i] = 0;
-            }
-
+            InventoryLayout.EndRaid(player, extract);
             player.zone = Zone.Shop;
             player.position = new Vector3(0, 0, 7.5f);
             player.yaw = 180;
@@ -208,18 +189,8 @@ namespace DungeonsNShops
                 count = enemy.kind == 2 ? 2 : 1;
             }
 
-            if (player.haul.Sum() + count > HaulCapacity) return "error.capacity";
-            player.haul[item] += count;
-            if (index == -1)
-            {
-                raid.cacheTaken = true;
-                // The coat is immediately usable. Other loot is secured on extraction.
-                if (player.bag[item] < 20)
-                {
-                    player.haul[item]--;
-                    player.bag[item]++;
-                }
-            }
+            if (!InventoryLayout.Add(player, item, count, unsecured: true)) return "error.capacity";
+            if (index == -1) raid.cacheTaken = true;
             else if (index >= raid.enemies.Length)
                 raid.veinsTaken |= 1 << (index - raid.enemies.Length);
             else
@@ -372,8 +343,8 @@ namespace DungeonsNShops
             Vector3 forward = Quaternion.Euler(0, player.yaw, 0) * Vector3.forward;
             float damage = enemy.kind == 2 ? (player.HasCoat ? 11 : 35) : enemy.kind == 1 ? 13 : 16;
             if (player.ward > 0) damage *= 0.6f;
-            for (int i = 0; i < player.equipment.Length; i++)
-                if (i != (int)ArmorSlot.Torso && player.equipment[i] >= 0) damage *= 0.92f;
+            foreach (var stack in player.inventory)
+                if (stack.cell >= InventoryLayout.ArmorStart && stack.cell != InventoryLayout.ArmorStart + (int)ArmorSlot.Torso) damage *= 0.92f;
             if (control.blocking && control.input.block &&
                 Vector3.Dot(forward, (enemy.position - player.position).normalized) > 0.15f)
             {

@@ -11,7 +11,11 @@ namespace DungeonsNShops
             public LegacyShelf shelf = null;
             public LegacyPlayer[] players = null;
         }
-        [Serializable] private sealed class LegacyPlayer { public int armor = -1; }
+        [Serializable] private sealed class LegacyPlayer
+        {
+            public int armor = -1, offhand = -1, selected;
+            public int[] bag, haul, hotbar, equipment;
+        }
         [Serializable] private sealed class LegacyShelf
         {
             public int item = -1, count = 0, manualPrice = 14;
@@ -61,8 +65,8 @@ namespace DungeonsNShops
                 return null;
             if (state.version == WorldState.CurrentVersion)
                 return state.market.Length == Catalog.Count ? state : null;
-            if (state.version is < 1 or > 3 || state.market.Length != (state.version == 3 ? 13 : 10)) return null;
-            LegacySave legacy = state.version < 3 ? JsonUtility.FromJson<LegacySave>(json) : null;
+            if (state.version is < 1 or > 4 || state.market.Length != (state.version == 4 ? 14 : state.version == 3 ? 13 : 10)) return null;
+            LegacySave legacy = JsonUtility.FromJson<LegacySave>(json);
             if (state.version == 1) UpgradeShelf(state, legacy?.shelf);
 
             int previousCount = state.market.Length;
@@ -71,13 +75,38 @@ namespace DungeonsNShops
             for (int i = 0; i < state.players.Count; i++)
             {
                 PlayerState player = state.players[i];
-                if (state.version < 3)
-                    InventoryLayout.Migrate(player, legacy?.players != null && i < legacy.players.Length ? legacy.players[i].armor : -1);
-                else
+                var old = legacy.players[i];
+                player.inventory = new();
+                player.quickSlots = InventoryLayout.StartingSlots;
+                player.selected = 0;
+                var bag = old.bag ?? Array.Empty<int>();
+                void Equip(int item, int cell)
                 {
-                    Array.Resize(ref player.bag, Catalog.Count);
-                    Array.Resize(ref player.haul, Catalog.Count);
+                    if (item < 0 || item >= bag.Length || bag[item] <= 0 || InventoryLayout.At(player, cell) != null) return;
+                    player.inventory.Add(new InventoryStack { item = item, count = 1, cell = cell });
+                    bag[item]--;
                 }
+                int wielded = old.hotbar != null && old.selected >= 0 && old.selected < old.hotbar.Length
+                    ? old.hotbar[old.selected] : old.selected;
+                int weapon = Catalog.Valid(wielded) && Catalog.Get(wielded).Damage > 0 ? wielded : (int)Item.Blade;
+                Equip(weapon, InventoryLayout.HotbarStart);
+                if (old.offhand == (int)Item.Shield && !InventoryLayout.TwoHands(player))
+                    Equip(old.offhand, InventoryLayout.HotbarStart + 1);
+                for (int slot = 0; slot < InventoryLayout.ArmorSize; slot++)
+                {
+                    int armor = old.equipment != null && slot < old.equipment.Length ? old.equipment[slot] : old.armor;
+                    if (Catalog.ArmorPosition(armor) == slot) Equip(armor, InventoryLayout.ArmorStart + slot);
+                }
+                for (int item = 0; item < bag.Length; item++)
+                {
+                    int pending = old.haul != null && item < old.haul.Length ? old.haul[item] : 0;
+                    int total = bag[item] + pending;
+                    int packed = 0;
+                    while (packed < total && InventoryLayout.Add(player, item, 1, packed >= bag[item])) packed++;
+                    if (packed < total)
+                        state.warehouse.Add(new Crate { id = state.nextId++, item = item, count = total - packed });
+                }
+                player.crateActive = player.carriedCrate?.id > 0;
             }
             state.craft = null;
             state.version = WorldState.CurrentVersion;

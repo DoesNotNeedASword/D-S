@@ -35,7 +35,6 @@ namespace DungeonsNShops
             {
                 player.online = false;
                 player.ready = false;
-                InventoryLayout.Sync(player);
             }
 
             State.craft = null;
@@ -56,11 +55,7 @@ namespace DungeonsNShops
                     return false;
 
                 player = new PlayerState { id = id, position = Map.ShopSpawn + (owner ? Vector3.zero : Vector3.right) };
-                player.bag[(int)Item.Blade] = 1;
-                player.bag[(int)Item.Shield] = 1;
-                player.bag[(int)Item.Tonic] = 2;
-                player.bag[(int)Item.Trap] = 2;
-                InventoryLayout.Migrate(player, -1);
+                InventoryLayout.GiveStarterKit(player);
                 State.players.Add(player);
             }
 
@@ -125,8 +120,6 @@ namespace DungeonsNShops
             };
             if (error != null)
                 Notify(player, error);
-            else if (action.kind is ActionKind.TakeCrate or ActionKind.Use or ActionKind.Loot or ActionKind.FinishCraft)
-                InventoryLayout.Sync(player);
         }
 
         public void Tick(float delta)

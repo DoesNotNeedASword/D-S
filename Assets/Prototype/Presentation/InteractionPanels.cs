@@ -51,8 +51,8 @@ namespace DungeonsNShops
 
         private static int InventoryStamp(PlayerState player)
         {
-            int stamp = HashCode.Combine(player.selected, player.offhand, player.haul.Sum(), player.crateActive);
-            foreach (int count in player.bag) stamp = HashCode.Combine(stamp, count);
+            int stamp = HashCode.Combine(player.selected, player.Offhand, player.inventory.Count, player.crateActive);
+            foreach (var stack in player.inventory) stamp = HashCode.Combine(stamp, stack.item, stack.count);
             return stamp;
         }
 
@@ -68,7 +68,7 @@ namespace DungeonsNShops
 
             return site switch
             {
-                Site.Supplier => HashCode.Combine(world.day, world.deliveries.Count),
+                Site.Supplier => HashCode.Combine(world.day, world.deliveries.Count, player.quickSlots),
                 Site.Bench => HashCode.Combine(world.craft?.id ?? 0, InventoryStamp(player)),
                 Site.Bank => HashCode.Combine(world.money, world.debt),
                 _ => 0
@@ -81,7 +81,7 @@ namespace DungeonsNShops
             switch (site)
             {
                 case Site.Shelf: Prices(world); break;
-                case Site.Supplier: Supplier(world); break;
+                case Site.Supplier: Supplier(world, player); break;
                 case Site.Bank:
                     ui.Label(panel, T("register.report", Currency(world.money), Currency(world.debt), Currency(balance.dailyTax),
                         Currency(balance.loanPayment), Currency(world.arrears)), 58);
@@ -140,7 +140,7 @@ namespace DungeonsNShops
             {
                 if (!Catalog.IsIngredient(item)) continue;
                 int selectedItem = item;
-                int available = player.bag[item];
+                int available = player.Count(item);
                 ingredients[item] = Mathf.Min(ingredients[item], available);
                 ui.Label(panel, T("bench.effects", ItemName(item), ItemName((int)GameWorld.ReagentEffect((Item)item, false)),
                     ItemName((int)GameWorld.ReagentEffect((Item)item, true))), 28, 16);
@@ -166,15 +166,18 @@ namespace DungeonsNShops
             {
                 for (int item = 0; item < quantities.Length; item++)
                     if (quantities[item] != null)
-                        quantities[item].text = T("bench.ingredient", ItemName(item), ingredients[item], player.bag[item]);
+                        quantities[item].text = T("bench.ingredient", ItemName(item), ingredients[item], player.Count(item));
                 begin.interactable = ingredients.Sum() >= 2;
             }
         }
 
-        private void Supplier(WorldState world)
+        private void Supplier(WorldState world, PlayerState player)
         {
             ui.Label(panel, T("supplier.hint"), 52);
-            RectTransform list = ui.Scroll(panel, 388, out scroll);
+            if (player.quickSlots < InventoryLayout.HotbarSize)
+                ui.Button(panel, T("belt.expand", player.quickSlots + 1, Currency(InventoryLayout.BeltPrice(player))),
+                    () => command(ActionKind.ExpandBelt, 0, 0));
+            RectTransform list = ui.Scroll(panel, 340, out scroll);
             foreach (PendingDelivery delivery in world.deliveries)
                 ui.Label(list, T("warehouse.wait", ItemName(delivery.crate.item), delivery.crate.count, Currency(delivery.paid)));
             for (int item = 0; item < Catalog.Count; item++)

@@ -18,7 +18,7 @@ namespace DungeonsNShops
     {
         Stock, TakeCrate, Retrieve, Price, Open, Sell, Close, Order, Loan, Repay,
         BeginCraft, CraftZone, Stir, FinishCraft, CancelCraft, Enter, Exit, Sleep, Ready, Select,
-        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient
+        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient, ExpandBelt
     }
 
     public readonly struct ItemDefinition
@@ -89,13 +89,9 @@ namespace DungeonsNShops
         public float yaw, pitch;
         public bool crouched, guarding;
         public float swing, ward;
-        public int selected = (int)Item.Blade;
-        public int offhand = (int)Item.Shield;
-        public int[] backpack = InventoryLayout.Empty(InventoryLayout.BackpackSize);
-        public int[] hotbar = InventoryLayout.Empty(InventoryLayout.HotbarSize);
-        public int[] equipment = InventoryLayout.Empty(InventoryLayout.ArmorSize);
-        public int[] bag = new int[Catalog.Count];
-        public int[] haul = new int[Catalog.Count];
+        public int selected;
+        public int quickSlots = InventoryLayout.StartingSlots;
+        public List<InventoryStack> inventory = new();
         public Crate carriedCrate;
         public bool crateActive;
         public long lastOperation;
@@ -103,10 +99,17 @@ namespace DungeonsNShops
         public int noticeVersion;
 
         public bool HoldingCrate => crateActive && carriedCrate?.id > 0;
-        public int Main => !HoldingCrate ? hotbar[selected] : -1;
-        public bool HasShield => !HoldingCrate && offhand == (int)Item.Shield && bag[offhand] > 0 &&
-                                 (Main < 0 || !Catalog.Get(Main).TwoHanded);
-        public bool HasCoat => equipment[(int)ArmorSlot.Torso] == (int)Item.Coat;
+        public InventoryStack Quick(int index) => inventory.Find(s => s.cell == InventoryLayout.HotbarStart + index);
+        public int Count(int item)
+        {
+            int count = 0;
+            foreach (var stack in inventory) if (stack.item == item) count += stack.count;
+            return count;
+        }
+        public int Main => HoldingCrate ? -1 : Quick(selected)?.item ?? -1;
+        public int Offhand => Quick(1)?.item ?? -1;
+        public bool HasShield => !HoldingCrate && Offhand == (int)Item.Shield;
+        public bool HasCoat => inventory.Exists(s => s.cell == InventoryLayout.ArmorStart + (int)ArmorSlot.Torso);
         public float EyeHeight => crouched ? 1.05f : 1.62f;
     }
 
@@ -219,7 +222,7 @@ namespace DungeonsNShops
     [Serializable]
     public sealed class WorldState
     {
-        public const int CurrentVersion = 4;
+        public const int CurrentVersion = 5;
         public int version = CurrentVersion;
         public int day = 1, money = 120, debt = 50, arrears, lastTax, lastPayment, nextId = 1;
         public DayPhase phase;

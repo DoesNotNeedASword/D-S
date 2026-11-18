@@ -113,7 +113,7 @@ namespace DungeonsNShops
             for (int item = 0; item < ingredients.Length; item++)
             {
                 int count = ingredients[item];
-                if (count < 0 || count > player.bag[item] || (count > 0 && !Catalog.IsIngredient(item))) return false;
+                if (count < 0 || count > player.Count(item) || (count > 0 && !Catalog.IsIngredient(item))) return false;
                 total += count;
             }
             return total is >= 2 and <= MaxReagents;
@@ -134,7 +134,7 @@ namespace DungeonsNShops
                 if (strengths[(int)option] > strengths[(int)product]) product = option;
 
             for (int item = 0; item < session.ingredients.Length; item++)
-                player.bag[item] -= session.ingredients[item];
+                InventoryLayout.Consume(player, item, session.ingredients[item]);
             AddCrate((int)product, 1, 0, quality);
             State.craft = null;
             Notify(player, product switch

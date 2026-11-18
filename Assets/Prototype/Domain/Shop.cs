@@ -103,9 +103,8 @@ namespace DungeonsNShops
                     if (!own && (target.Kind != ShopTargetKind.Crate || target.Id != action.value)) return "error.reach";
                     Crate source = own ? player.carriedCrate : State.warehouse.Find(c => c.id == action.value);
                     if (source == null || source.count <= 0) return "error.stock";
-                    if (player.bag[source.item] >= 20) return "error.capacity";
+                    if (!InventoryLayout.Add(player, source.item, 1)) return "error.capacity";
                     source.count--;
-                    player.bag[source.item]++;
                     if (!own && source.count == 0)
                     {
                         State.warehouse.Remove(source);
@@ -172,6 +171,14 @@ namespace DungeonsNShops
                     State.customer = null;
                     Notify(player, "notice.night");
                     return null;
+                case ActionKind.ExpandBelt:
+                    if (!At(player, Site.Supplier)) return "error.reach";
+                    if (player.quickSlots >= InventoryLayout.HotbarSize) return "error.capacity";
+                    int beltCost = InventoryLayout.BeltPrice(player);
+                    if (State.money < beltCost) return "error.money";
+                    State.money -= beltCost;
+                    player.quickSlots++;
+                    break;
                 case ActionKind.Order:
                     if (!At(player, Site.Supplier)) return "error.reach";
                     if (!Catalog.Valid(action.value)) return "error.stock";

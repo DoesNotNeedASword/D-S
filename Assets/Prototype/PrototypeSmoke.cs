@@ -113,7 +113,7 @@ namespace DungeonsNShops
                 else if (stage == 3 && runtime.State.shelf.Used == 8)
                 {
                     simulatedInput.held = null;
-                    runtime.LocalPlayer.bag[(int)Item.Herb] = 2;
+                    InventoryLayout.Add(runtime.LocalPlayer, (int)Item.Herb, 2);
                     simulatedInput.aim = AimStation(runtime.LocalPlayer, Site.Bench);
                     simulatedInput.next = Bind.Interact;
                     stage++;
@@ -221,28 +221,28 @@ namespace DungeonsNShops
                         stage++;
                     }
                 }
-                else if (stage == 11 && HasButton("panel.offhand"))
+                else if (stage == 11 && HasButton("panel.close"))
                 {
                     InventoryCell[] cells = UnityEngine.Object.FindObjectsByType<InventoryCell>();
-                    Check(cells.Length == 44, "30 backpack, 10 shortcut and 4 armor cells");
+                    Check(cells.Length == 48, "40 backpack, four unlocked belt and four armor cells");
                     if (Application.isBatchMode)
                         Capture("PrototypeInventory");
-                    InventoryCell blade = cells.First(c => c.Index < InventoryLayout.BackpackSize && c.Item == (int)Item.Blade);
-                    blade.OnPointerEnter(null);
-                    simulatedInput.slot = 8;
+                    InventoryCell trap = cells.First(c => c.Index < InventoryLayout.BackpackSize && c.Item == (int)Item.Trap);
+                    trap.OnPointerEnter(null);
+                    simulatedInput.slot = 3;
                     stage++;
                 }
-                else if (stage == 12 && runtime.LocalPlayer.hotbar[8] == (int)Item.Blade)
+                else if (stage == 12 && runtime.LocalPlayer.Quick(3)?.item == (int)Item.Trap)
                 {
                     InventoryCell[] cells = UnityEngine.Object.FindObjectsByType<InventoryCell>();
-                    InventoryCell shortcut = cells.First(c => c.Index == InventoryLayout.HotbarStart + 8);
+                    InventoryCell shortcut = cells.First(c => c.Index == InventoryLayout.HotbarStart + 3);
                     if (shortcut.Item < 0) return;
-                    InventoryCell destination = cells.First(c => c.Index == InventoryLayout.BackpackSize - 1);
+                    InventoryCell destination = cells.First(c => c.Index == 6);
                     destination.OnDrop(new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
                     {
                         pointerDrag = shortcut.gameObject
                     });
-                    Check(runtime.LocalPlayer.hotbar[8] == -1 && runtime.LocalPlayer.backpack[^1] == (int)Item.Blade,
+                    Check(runtime.LocalPlayer.Quick(3) == null && InventoryLayout.At(runtime.LocalPlayer, 15)?.item == (int)Item.Trap,
                         "hover key assigns and drop back clears shortcut");
                     FindButton("panel.close").onClick.Invoke();
                     PlayerState player = runtime.LocalPlayer;
@@ -501,7 +501,7 @@ namespace DungeonsNShops
             Do(b, ActionKind.BeginCraft, ingredients: mix);
             Check(state.craft.owner == a.id, "exclusive bench");
             world.Disconnect(a.id);
-            Check(state.craft == null && a.bag[(int)Item.Herb] == 2, "disconnect cancels craft");
+            Check(state.craft == null && a.Count((int)Item.Herb) == 2, "disconnect cancels craft");
             Check(world.Connect(a.id, true), "reconnect");
             Do(a, ActionKind.BeginCraft, ingredients: mix);
             int craft = state.craft.id;
@@ -516,10 +516,10 @@ namespace DungeonsNShops
             StirFor(craft, 2.1f);
             Do(a, ActionKind.FinishCraft, craft);
             Do(a, ActionKind.FinishCraft, craft);
-            Check(state.craft == null && state.lastCraft.Length == 3 && a.bag[(int)Item.Herb] == 0 &&
+            Check(state.craft == null && state.lastCraft.Length == 3 && a.Count((int)Item.Herb) == 0 &&
                 state.warehouse.Count(c => c.item == (int)Item.Tonic && c.quality == 100) == 1, "one crafted output");
 
-            a.bag[(int)Item.Ore] = 4;
+            InventoryLayout.Add(a, (int)Item.Ore, 4);
             mix[(int)Item.Herb] = 0;
             mix[(int)Item.Ore] = 2;
             foreach (float duration in new[] { 0.5f, 2.1f })
@@ -575,7 +575,7 @@ namespace DungeonsNShops
             a.position = enemy.position;
             Do(a, ActionKind.Loot, 0);
             Do(a, ActionKind.Loot, 0);
-            Check(a.haul[(int)Item.Ore] == 1, "loot unique");
+            Check(a.Count((int)Item.Ore) == 1 && a.inventory.Find(s => s.item == (int)Item.Ore).unsecured == 1, "loot unique");
             Check(b.zone == Zone.Shop, "split party");
             Go(b, Site.Supplier);
             Do(b, ActionKind.Order, (int)Item.Herb);
@@ -607,20 +607,24 @@ namespace DungeonsNShops
             Check(upgraded.version == WorldState.CurrentVersion && upgraded.money == 107 && upgraded.shelf.Used == 12 &&
                 upgraded.shelf.stock[0].manualPrice == 31 && upgraded.warehouse.Single().count == 4, "version 1 shelf migrates without loss");
             a = world.State.players[0];
-            a.bag[(int)Item.Boots] = 1;
-            InventoryLayout.Sync(a);
-            int boots = Array.IndexOf(a.backpack, (int)Item.Boots);
+            InventoryLayout.Add(a, (int)Item.Boots, 1);
+            int boots = a.inventory.Find(s => s.item == (int)Item.Boots).cell;
             int feet = InventoryLayout.ArmorStart + (int)ArmorSlot.Feet;
-            int head = InventoryLayout.ArmorStart + (int)ArmorSlot.Head;
-            Do(a, ActionKind.MoveInventory, boots, head);
-            Check(a.equipment[(int)ArmorSlot.Head] == -1, "armor cannot go into the wrong slot");
+            Do(a, ActionKind.MoveInventory, boots, InventoryLayout.ArmorStart + (int)ArmorSlot.Head);
+            Check(InventoryLayout.At(a, boots)?.item == (int)Item.Boots, "reject wrong armor slot");
             Do(a, ActionKind.MoveInventory, boots, feet);
-            Do(a, ActionKind.MoveInventory, feet, InventoryLayout.BackpackSize - 1);
-            Check(a.equipment[(int)ArmorSlot.Feet] == -1 && a.backpack[^1] == (int)Item.Boots &&
-                a.bag[(int)Item.Boots] == 1, "unequip and reposition without duplicating armor");
-            Do(a, ActionKind.MoveInventory, a.backpack.Length - 1, InventoryLayout.HotbarStart + 9);
+            Do(a, ActionKind.MoveInventory, feet, 39);
+            Check(InventoryLayout.At(a, feet)?.item == (int)Item.Boots, "two-cell boots cannot straddle grid edge");
+            Do(a, ActionKind.MoveInventory, feet, 38);
+            Check(InventoryLayout.At(a, 39)?.cell == 38 && a.Count((int)Item.Boots) == 1, "both squares represent one item");
+            InventoryLayout.Add(a, (int)Item.Greatblade, 1);
+            Do(a, ActionKind.MoveInventory, a.inventory.Find(s => s.item == (int)Item.Greatblade).cell, InventoryLayout.HotbarStart);
+            Check(InventoryLayout.TwoHands(a) && !a.HasShield && a.Count((int)Item.Shield) == 1, "two hands safely stow the shield");
+            Go(a, Site.Supplier);
+            world.State.money = 200;
+            Do(a, ActionKind.ExpandBelt);
             WorldState layoutSave = WorldSave.Decode(JsonUtility.ToJson(world.State));
-            Check(layoutSave.players[0].hotbar[9] == (int)Item.Boots, "custom quick slot survives save");
+            Check(layoutSave.players[0].quickSlots == 5 && world.State.money == 100, "purchased belt persists");
         }
 
         private static WorldSave TestSave() => new(Guid.NewGuid().ToString("N"),

@@ -8,12 +8,15 @@ namespace DungeonsNShops
     {
         private readonly InventoryCell[] inventoryCells = new InventoryCell[InventoryLayout.ArmorStart + InventoryLayout.ArmorSize];
         private readonly UnityEngine.UI.Text[] inventoryLabels = new UnityEngine.UI.Text[InventoryLayout.ArmorStart + InventoryLayout.ArmorSize];
+        private readonly RectTransform[] footprints = new RectTransform[InventoryLayout.BackpackSize];
+        private readonly Text[] itemTitles = new Text[InventoryLayout.BackpackSize];
+        private const int Pitch = 62;
         private InventoryCell hoveredCell;
         private UnityEngine.UI.Text dragLabel, inventoryHint;
 
         public void AssignHovered(int hotbarIndex)
         {
-            if (hoveredCell != null && hoveredCell.Index < InventoryLayout.HotbarStart && hoveredCell.Item >= 0)
+            if (hotbarIndex >= 0 && hotbarIndex < InventoryLayout.HotbarSize && hoveredCell != null && hoveredCell.Index < InventoryLayout.HotbarStart && hoveredCell.Item >= 0)
                 command(ActionKind.MoveInventory, hoveredCell.Index, InventoryLayout.HotbarStart + hotbarIndex);
         }
 
@@ -23,14 +26,17 @@ namespace DungeonsNShops
             inventoryHint = ui.Label(panel, T("inventory.hint"), 36, 17);
             RectTransform layout = ui.Row(panel, 350);
             RectTransform pack = ui.Rect(layout, "Backpack");
-            GridLayoutGroup grid = pack.gameObject.AddComponent<GridLayoutGroup>();
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 6;
-            grid.cellSize = new Vector2(88, 61);
-            grid.spacing = new Vector2(5, 5);
             LayoutElement width = pack.gameObject.AddComponent<LayoutElement>();
-            width.minWidth = width.preferredWidth = 553;
-            for (int i = 0; i < InventoryLayout.BackpackSize; i++) AddCell(pack, i);
+            width.minWidth = width.preferredWidth = InventoryLayout.Columns * Pitch;
+            for (int i = 0; i < InventoryLayout.BackpackSize; i++)
+                Position(AddCell(pack, i), i, Vector2Int.one);
+            for (int i = 0; i < footprints.Length; i++)
+            {
+                RectTransform tile = footprints[i] = ui.Box(pack, "Packed item", UiFactory.Accent);
+                tile.GetComponent<Image>().raycastTarget = false;
+                itemTitles[i] = ui.Text(tile, "", 16, TextAnchor.MiddleCenter);
+                UiFactory.Stretch(itemTitles[i].rectTransform, new Vector2(3, 2), new Vector2(-3, -2));
+            }
 
             RectTransform armor = ui.Rect(layout, "Armor");
             UiFactory.Column(armor, 8, 3);
@@ -44,9 +50,15 @@ namespace DungeonsNShops
             for (int i = 0; i < InventoryLayout.HotbarSize; i++)
                 AddCell(shortcuts, InventoryLayout.HotbarStart + i);
             RectTransform actions = ui.Row(panel, 38);
-            Act(actions, "panel.offhand", ActionKind.Offhand);
             Button(actions, "panel.close", close);
             RefreshInventory(player);
+        }
+
+        private static void Position(RectTransform rect, int cell, Vector2Int size)
+        {
+            Vector2 topLeft = new(cell % InventoryLayout.Columns * Pitch, -cell / InventoryLayout.Columns * Pitch);
+            UiFactory.Anchor(rect, Vector2.up, Vector2.up,
+                topLeft + new Vector2(1, 1 - size.y * Pitch), topLeft + new Vector2(size.x * Pitch - 1, -1));
         }
 
         private RectTransform AddCell(Transform parent, int index)
@@ -73,19 +85,28 @@ namespace DungeonsNShops
         {
             for (int i = 0; i < inventoryCells.Length; i++)
             {
-                int item = i < InventoryLayout.HotbarStart ? player.backpack[i]
-                    : i < InventoryLayout.ArmorStart ? player.hotbar[i - InventoryLayout.HotbarStart]
-                    : player.equipment[i - InventoryLayout.ArmorStart];
+                InventoryStack stack = InventoryLayout.At(player, i);
+                int item = stack?.item ?? -1;
                 inventoryCells[i].Item = item;
-                string prefix = i >= InventoryLayout.ArmorStart
-                    ? T("armor." + (ArmorSlot)(i - InventoryLayout.ArmorStart)) + "\n"
-                    : i >= InventoryLayout.HotbarStart ? ((i - InventoryLayout.HotbarStart + 1) % 10) + "\n" : "";
-                inventoryLabels[i].text = prefix + (item < 0 ? T("hud.empty")
-                    : ItemName(item) + (i < InventoryLayout.BackpackSize ? " ×" + player.bag[item] : ""));
+                string title = stack == null ? T("hud.empty") : ItemName(item) + (stack.count > 1 ? " ×" + stack.count : "");
+                if (i < InventoryLayout.BackpackSize)
+                {
+                    bool origin = stack?.cell == i;
+                    footprints[i].gameObject.SetActive(origin);
+                    if (!origin) continue;
+                    Position(footprints[i], i, InventoryLayout.Size(item));
+                    itemTitles[i].text = title;
+                    continue;
+                }
+                bool armor = i >= InventoryLayout.ArmorStart;
+                int slot = i - InventoryLayout.HotbarStart;
+                inventoryCells[i].gameObject.SetActive(armor || slot < player.quickSlots);
+                string label = armor ? T("armor." + (ArmorSlot)(i - InventoryLayout.ArmorStart))
+                    : (slot + 1) + (slot < 2 ? " · " + T(slot == 0 ? "slot.weapon" : "slot.offhand") : "");
+                if (!armor && slot == 1 && InventoryLayout.TwoHands(player)) title = T("hud.both");
+                inventoryLabels[i].text = label + "\n" + title;
             }
-
-            inventoryHint.text = hoveredCell != null && hoveredCell.Item >= 0
-                ? ItemName(hoveredCell.Item) + "   ·   " + T("inventory.hint") : T("inventory.hint");
+            inventoryHint.text = T("inventory.hint");
         }
 
         private void MoveGhost(InventoryCell source, Vector2 position)

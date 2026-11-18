@@ -127,7 +127,7 @@ namespace DungeonsNShops
             notice.text = T(toast);
             if (!hud.gameObject.activeSelf) return;
             bool inRaid = player.zone == Zone.Raid;
-            info.text = inRaid ? T("hud.raid", world.day, world.raid.id, player.haul.Sum(), GameWorld.HaulCapacity) :
+            info.text = inRaid ? T("hud.raid", world.day, world.raid.id, player.inventory.Where(s => s.cell < InventoryLayout.BackpackSize).Sum(s => InventoryLayout.Size(s.item).x * InventoryLayout.Size(s.item).y), InventoryLayout.BackpackSize) :
                 T("hud.shop", world.day, T("phase." + world.phase), Currency(world.money), Currency(world.debt));
             UpdateMeter(0, "HP", player.hp);
             UpdateMeter(1, "SP", player.sp);
@@ -137,14 +137,17 @@ namespace DungeonsNShops
                 ? T(player.HoldingCrate ? "hud.crateActive" : "hud.crateStored",
                     bindings.Display(Bind.Crate), ItemName(player.carriedCrate.item), player.carriedCrate.count)
                 : T("hud.main", ItemName(main),
-                    main >= 0 && Catalog.Get(main).TwoHanded ? T("hud.both") : ItemName(player.offhand));
+                    main >= 0 && Catalog.Get(main).TwoHanded ? T("hud.both") : ItemName(player.Offhand));
             help.text = inRaid ? T("hud.controls", bindings.Display(Bind.Use), bindings.Display(Bind.Inventory), bindings.Display(Bind.Crouch))
                 : T("hud.shopControls", bindings.Display(Bind.Interact), bindings.Display(Bind.Use),
                     bindings.Display(Bind.Crate), bindings.Display(Bind.Inventory));
             for (int i = 0; i < slots.Length; i++)
             {
-                int item = player.hotbar[i];
-                string name = item >= 0 ? ItemName(item) + " ×" + player.bag[item] : T("hud.empty");
+                slotColors[i].gameObject.SetActive(i < player.quickSlots);
+                if (i >= player.quickSlots) continue;
+                var stack = player.Quick(i);
+                int item = stack?.item ?? -1;
+                string name = item >= 0 ? ItemName(item) + " ×" + stack.count : i == 1 && InventoryLayout.TwoHands(player) ? T("hud.both") : T("hud.empty");
                 slots[i].text = ((i + 1) % 10) + "\n" + name;
                 slotColors[i].color = i == player.selected && !player.HoldingCrate
                     ? new Color(0.18f, 0.43f, 0.38f) : UiFactory.Panel;
