@@ -11,8 +11,30 @@ namespace DungeonsNShops
         public static readonly Color Accent = new(0.48f, 0.33f, 0.17f);
         public static readonly Color TextColor = new(0.98f, 0.89f, 0.72f);
         private readonly Font customFont = Font.CreateDynamicFontFromOSFont(new[] { "Georgia", "Times New Roman" }, 22);
+        private readonly Texture2D[] icons = new Texture2D[Catalog.Count];
         private Sprite frame;
         private Texture2D frameTexture;
+
+        public RawImage ItemIcon(RectTransform parent, Vector2 min, Vector2 max)
+        {
+            RectTransform bounds = Rect(parent, "Icon bounds");
+            Stretch(bounds, min, max);
+            RectTransform art = Rect(bounds, "Item portrait");
+            RawImage image = art.gameObject.AddComponent<RawImage>();
+            image.raycastTarget = false;
+            art.gameObject.AddComponent<AspectRatioFitter>().aspectMode = AspectRatioFitter.AspectMode.FitInParent;
+            return image;
+        }
+
+        public void SetIcon(RawImage image, int item)
+        {
+            image.gameObject.SetActive(Catalog.Valid(item));
+            if (!Catalog.Valid(item)) return;
+            var texture = icons[item] ??= Resources.Load<Texture2D>("InventoryArt/" + item);
+            if (image.texture == texture) return;
+            image.texture = texture;
+            image.GetComponent<AspectRatioFitter>().aspectRatio = texture.width / (float)texture.height;
+        }
 
         public RectTransform Rect(Transform parent, string name)
         {

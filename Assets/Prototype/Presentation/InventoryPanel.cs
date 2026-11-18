@@ -9,6 +9,8 @@ namespace DungeonsNShops
         private readonly InventoryCell[] inventoryCells = new InventoryCell[InventoryLayout.ArmorStart + InventoryLayout.ArmorSize];
         private readonly UnityEngine.UI.Text[] inventoryLabels = new UnityEngine.UI.Text[InventoryLayout.ArmorStart + InventoryLayout.ArmorSize];
         private readonly RectTransform[] footprints = new RectTransform[InventoryLayout.BackpackSize];
+        private readonly RawImage[] packIcons = new RawImage[InventoryLayout.BackpackSize];
+        private readonly RawImage[] equippedIcons = new RawImage[InventoryLayout.HotbarSize + InventoryLayout.ArmorSize];
         private readonly Text[] itemTitles = new Text[InventoryLayout.BackpackSize];
         private const int Pitch = 62;
         private InventoryCell hoveredCell;
@@ -32,9 +34,11 @@ namespace DungeonsNShops
                 Position(AddCell(pack, i), i, Vector2Int.one);
             for (int i = 0; i < footprints.Length; i++)
             {
-                RectTransform tile = footprints[i] = ui.Box(pack, "Packed item", UiFactory.Accent);
+                RectTransform tile = footprints[i] = ui.Box(pack, "Packed item", new Color(0.30f, 0.27f, 0.18f));
                 tile.GetComponent<Image>().raycastTarget = false;
-                itemTitles[i] = ui.Text(tile, "", 16, TextAnchor.MiddleCenter);
+                packIcons[i] = ui.ItemIcon(tile, new Vector2(6, 5), new Vector2(-6, -5));
+                itemTitles[i] = ui.Text(tile, "", 17, TextAnchor.LowerRight);
+                AddOutline(itemTitles[i]);
                 UiFactory.Stretch(itemTitles[i].rectTransform, new Vector2(3, 2), new Vector2(-3, -2));
             }
 
@@ -50,6 +54,13 @@ namespace DungeonsNShops
             for (int i = 0; i < InventoryLayout.HotbarSize; i++)
                 AddCell(shortcuts, InventoryLayout.HotbarStart + i);
             RectTransform actions = ui.Row(panel, 38);
+            if (player.zone == Zone.Shop && Map.Distance(player.position, Map.SitePosition(Site.Warehouse)) <= 3.1f)
+            {
+                var target = ui.Box(actions, "Pack merchandise", UiFactory.Accent);
+                target.gameObject.AddComponent<InventoryCell>().Drop = (from, _) => command(ActionKind.PackStock, from, 0);
+                var caption = ui.Text(target, T("inventory.pack"), 16, TextAnchor.MiddleCenter);
+                UiFactory.Stretch(caption.rectTransform, Vector2.zero, Vector2.zero);
+            }
             Button(actions, "panel.close", close);
             RefreshInventory(player);
         }
@@ -82,6 +93,12 @@ namespace DungeonsNShops
                 else if (hoveredCell == target) hoveredCell = null;
             };
             inventoryCells[index] = cell;
+            if (index >= InventoryLayout.HotbarStart)
+            {
+                var bounds = ui.Rect(rect, "Equipment icon");
+                UiFactory.Anchor(bounds, Vector2.zero, new Vector2(0.34f, 1), new Vector2(5, 6), new Vector2(0, -6));
+                equippedIcons[index - InventoryLayout.HotbarStart] = ui.ItemIcon(bounds, Vector2.zero, Vector2.zero);
+            }
             UnityEngine.UI.Text label = ui.Text(rect, "", 14, TextAnchor.MiddleCenter);
             UiFactory.Stretch(label.rectTransform, new Vector2(4, 0), new Vector2(-4, 0));
             inventoryLabels[index] = label;
@@ -102,7 +119,8 @@ namespace DungeonsNShops
                     footprints[i].gameObject.SetActive(origin);
                     if (!origin) continue;
                     Position(footprints[i], i, InventoryLayout.Size(item));
-                    itemTitles[i].text = title;
+                    ui.SetIcon(packIcons[i], item);
+                    itemTitles[i].text = stack.count > 1 ? "×" + stack.count : "";
                     continue;
                 }
                 bool armor = i >= InventoryLayout.ArmorStart;
@@ -111,6 +129,8 @@ namespace DungeonsNShops
                 string label = armor ? T("armor." + (ArmorSlot)(i - InventoryLayout.ArmorStart))
                     : (slot + 1) + (slot < 2 ? " · " + T(slot == 0 ? "slot.weapon" : "slot.offhand") : "");
                 if (!armor && slot == 1 && InventoryLayout.TwoHands(player)) title = T("hud.both");
+                ui.SetIcon(equippedIcons[slot], item);
+                inventoryLabels[i].rectTransform.anchorMin = new Vector2(item >= 0 ? 0.34f : 0, 0);
                 inventoryLabels[i].text = label + "\n" + title;
             }
             inventoryHint.text = T("inventory.hint");

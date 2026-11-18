@@ -13,6 +13,7 @@ namespace DungeonsNShops
         private readonly RectTransform overlay, panel, hud, hotbar, hudHeader, toast;
         private readonly UnityEngine.UI.Text info, hands, prompt, notice, help, raidHint, crosshair;
         private readonly UnityEngine.UI.Text[] slots = new UnityEngine.UI.Text[InventoryLayout.HotbarSize];
+        private readonly UnityEngine.UI.RawImage[] quickIcons = new UnityEngine.UI.RawImage[InventoryLayout.HotbarSize];
         private readonly UnityEngine.UI.Image[] slotColors = new UnityEngine.UI.Image[InventoryLayout.HotbarSize];
         private readonly UnityEngine.UI.Text[] meters = new UnityEngine.UI.Text[3];
         private readonly RectTransform[] fills = new RectTransform[3];
@@ -61,6 +62,9 @@ namespace DungeonsNShops
             {
                 RectTransform tile = ui.Box(row, "Slot " + i, UiFactory.Accent);
                 slotColors[i] = tile.GetComponent<UnityEngine.UI.Image>();
+                var bounds = ui.Rect(tile, "Quick item");
+                UiFactory.Anchor(bounds, Vector2.zero, new Vector2(0.36f, 1), new Vector2(5, 4), new Vector2(0, -4));
+                quickIcons[i] = ui.ItemIcon(bounds, Vector2.zero, Vector2.zero);
                 slots[i] = ui.Text(tile, "", 14, TextAnchor.MiddleCenter);
                 UiFactory.Stretch(slots[i].rectTransform, new Vector2(2, 0), new Vector2(-2, 0));
             }
@@ -158,6 +162,8 @@ namespace DungeonsNShops
                 var stack = player.Quick(i);
                 int item = stack?.item ?? -1;
                 string name = item >= 0 ? ItemName(item) + " ×" + stack.count : i == 1 && InventoryLayout.TwoHands(player) ? T("hud.both") : T("hud.empty");
+                ui.SetIcon(quickIcons[i], item);
+                slots[i].rectTransform.anchorMin = new Vector2(item >= 0 ? 0.34f : 0, 0);
                 slots[i].text = ((i + 1) % 10) + "\n" + name;
                 slotColors[i].color = i == player.selected && !player.HoldingCrate
                     ? new Color(0.18f, 0.43f, 0.38f) : UiFactory.Panel;

@@ -63,7 +63,7 @@ namespace DungeonsNShops
             leftHand = Group("First person shield arm", camera.transform);
             models.Part(rightHand, "Leather glove", new Vector3(0, -0.04f, 0), new Vector3(0.16f, 0.18f, 0.19f), MedievalModels.Oak);
             Transform shield = Group("Equipped shield", leftHand);
-            shield.localScale = Vector3.one * 0.69f;
+            shield.localScale = Vector3.one * 0.53f;
             shield.localRotation = Quaternion.Euler(-90, 180, 0);
             models.ItemModel(shield, Item.Shield);
 
@@ -120,7 +120,6 @@ namespace DungeonsNShops
             raid.gameObject.SetActive(!making && inRaid);
             craft.gameObject.SetActive(making);
             heldCrate.SetActive(showHands && !making && player.HoldingCrate);
-            if (heldCrate.activeSelf) Tint(heldCrate.GetComponent<Renderer>(), ItemColor(player.carriedCrate.item));
             if (making)
             {
                 workbench.Show(state.craft);
@@ -161,14 +160,14 @@ namespace DungeonsNShops
 
             sword ??= HandSword(Item.Blade);
             greatsword ??= HandSword(Item.Greatblade);
-            sword.SetActive(player.Main == (int)Item.Blade);
-            greatsword.SetActive(player.Main == (int)Item.Greatblade);
+            sword.SetActive(player.Weapon?.item == (int)Item.Blade);
+            greatsword.SetActive(player.Weapon?.item == (int)Item.Greatblade);
             float swing = Mathf.Sin(Mathf.Clamp01(player.swing / 0.36f) * Mathf.PI);
             shieldRaise = Mathf.MoveTowards(shieldRaise, player.guarding ? 1 : 0, delta * 9);
             rightHand.localPosition = new Vector3(0.38f - swing * 0.45f, -0.39f + swing * 0.21f, 0.77f + swing * 0.28f);
             rightHand.localRotation = Quaternion.Euler(14 - swing * 37, 18 - swing * 85, 73 - swing * 105);
             leftHand.localPosition = Vector3.Lerp(new Vector3(-0.47f, -0.51f, 0.80f),
-                new Vector3(-0.25f, -0.10f, 0.79f), shieldRaise);
+                new Vector3(-0.32f, -0.20f, 0.89f), shieldRaise);
             leftHand.localRotation = Quaternion.Euler(-13 + shieldRaise * 11, -28 + shieldRaise * 25, 15 - shieldRaise * 11);
         }
 
@@ -338,7 +337,6 @@ namespace DungeonsNShops
                 GameObject box = crates[crate.rackSlot];
                 box.SetActive(true);
                 box.transform.position = ShopTargets.CratePosition(crate.rackSlot);
-                Tint(box.GetComponent<Renderer>(), ItemColor(crate.item));
                 visible |= 1 << crate.rackSlot;
             }
             for (int i = 0; i < crates.Count; i++)
@@ -384,17 +382,6 @@ namespace DungeonsNShops
         }
 
         private static readonly Color AccentGreen = new(0.13f, 0.49f, 0.37f);
-        private static Color ItemColor(int item) => (Item)item switch
-        {
-            Item.Herb => AccentGreen,
-            Item.Ore or Item.Shield => new Color(0.58f, 0.67f, 0.76f),
-            Item.Blade or Item.Greatblade => Blue,
-            Item.Focus => new Color(0.65f, 0.36f, 0.9f),
-            Item.Tonic => Teal,
-            Item.Ember => Threat,
-            _ => Gold
-        };
-
         private void RenderPayments(Customer buyer)
         {
             int count = buyer?.phase == CustomerPhase.Checkout ? buyer.payment?.Length ?? 0 : 0;
@@ -477,8 +464,8 @@ namespace DungeonsNShops
         {
             GameObject actor = Primitive(PrimitiveType.Capsule, parent, name, Vector3.zero, Vector3.one, tint);
             actor.GetComponent<Renderer>().enabled = false;
-            actors[actor] = models.Person(actor.transform, Color.Lerp(tint, MedievalModels.Oak, 0.50f), creature);
-            models.Part(actor.transform, "Badge", new Vector3(0, 0.18f, 0.2f), new Vector3(0.21f, 0.27f, 0.07f), tint);
+            actors[actor] = models.Person(actor.transform, creature);
+            models.Part(actor.transform, "Badge", new Vector3(0, 0.20f, 0.235f), new Vector3(0.065f, 0.077f, 0.025f), tint, roll: 45);
             return actor;
         }
 

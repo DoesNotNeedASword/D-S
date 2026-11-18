@@ -442,8 +442,8 @@
     },
     {
       "key": "gate.hint",
-      "ru": "Вход ночью · −{0} EP · напарник может догнать. Вернитесь к входу, чтобы отправить добычу на склад.",
-      "en": "Night entry · −{0} EP · partner can catch up. Return to the entrance to send loot to the warehouse."
+      "ru": "Вход ночью · −{0} EP. Вернитесь к входу, чтобы сохранить трофеи в рюкзаке.",
+      "en": "Night entry · −{0} EP. Return to the entrance to secure the loot in your backpack."
     },
     {
       "key": "gate.enter",
@@ -532,8 +532,8 @@
     },
     {
       "key": "error.hands",
-      "ru": "Нужен щит и свободная дополнительная рука.",
-      "en": "You need a shield and a free offhand."
+      "ru": "Эта вещь несовместима с выбранной ячейкой экипировки.",
+      "en": "This item does not fit that equipment slot."
     },
     {
       "key": "error.fullHp",
@@ -602,8 +602,8 @@
     },
     {
       "key": "notice.return",
-      "ru": "Добыча доставлена на склад.",
-      "en": "Loot delivered to the warehouse."
+      "ru": "Вы вернулись с добычей. Вещи в рюкзаке сохранены.",
+      "en": "You returned with your loot. Backpack contents secured."
     },
     {
       "key": "notice.loot",
@@ -617,8 +617,8 @@
     },
     {
       "key": "bind.crate",
-      "ru": "Активный слот ящика",
-      "en": "Active crate slot"
+      "ru": "Бросить ящик",
+      "en": "Throw crate"
     },
     {
       "key": "hud.shopControls",
@@ -936,11 +936,6 @@
       "en": "Set down the crate first."
     },
     {
-      "key": "bind.Crate",
-      "ru": "Бросить ящик",
-      "en": "Throw crate"
-    },
-    {
       "key": "item.14",
       "ru": "Алхимическая смесь",
       "en": "Alchemical blend"
@@ -999,6 +994,16 @@
       "key": "error.coating",
       "ru": "Нужно оружие без покрытия и активная смесь.",
       "en": "Use an uncoated weapon and an active mixture."
+    },
+    {
+      "key": "inventory.pack",
+      "ru": "Перетащите товар сюда, чтобы упаковать на склад",
+      "en": "Drop backpack stock here to pack a warehouse crate"
+    },
+    {
+      "key": "error.packCoating",
+      "ru": "Сначала израсходуйте покрытие клинка.",
+      "en": "Use the blade coating before packing it for sale."
     }
   ]
 }

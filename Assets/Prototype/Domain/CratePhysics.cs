@@ -46,18 +46,19 @@ namespace DungeonsNShops
             return obj;
         }
 
+        public void Release(int id)
+        {
+            if (!bodies.Remove(id, out var body)) return;
+            body.gameObject.SetActive(false);
+            UnityEngine.Object.Destroy(body.gameObject);
+        }
+
         public bool Tick(List<Crate> crates, float delta)
         {
             removed.Clear();
             foreach (var entry in bodies)
                 if (!crates.Exists(c => c.id == entry.Key)) removed.Add(entry.Key);
-            foreach (int id in removed)
-            {
-                var obj = bodies[id].gameObject;
-                obj.SetActive(false);
-                UnityEngine.Object.Destroy(obj);
-                bodies.Remove(id);
-            }
+            foreach (int id in removed) Release(id);
             if (crates.Count == 0) return false;
             foreach (var crate in crates)
             {

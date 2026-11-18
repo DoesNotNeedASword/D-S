@@ -25,13 +25,13 @@ namespace DungeonsNShops
             if (Item >= 0 && eventData.button == PointerEventData.InputButton.Left)
                 Drag(this, eventData.position);
         }
-        public void OnEndDrag(PointerEventData eventData) => EndDrag();
+        public void OnEndDrag(PointerEventData eventData) => EndDrag?.Invoke();
         public void OnDrop(PointerEventData eventData)
         {
             InventoryCell source = eventData.pointerDrag?.GetComponent<InventoryCell>();
             if (source != null && source.Item >= 0) Drop(source.Index, Index);
         }
-        public void OnPointerEnter(PointerEventData eventData) => Hover(this, true);
-        public void OnPointerExit(PointerEventData eventData) => Hover(this, false);
+        public void OnPointerEnter(PointerEventData eventData) => Hover?.Invoke(this, true);
+        public void OnPointerExit(PointerEventData eventData) => Hover?.Invoke(this, false);
     }
 }

@@ -105,6 +105,7 @@ namespace DungeonsNShops
                     Crate picked = container.Find(c => c.id == action.value);
                     if (picked == null) return "error.stock";
                     container.Remove(picked);
+                    cratePhysics?.Release(picked.id);
                     picked.rackSlot = -1;
                     player.carriedCrate = picked;
                     player.crateActive = true;
@@ -178,6 +179,14 @@ namespace DungeonsNShops
                     State.customer = null;
                     Notify(player, "notice.night");
                     return null;
+                case ActionKind.PackStock:
+                    if (!At(player, Site.Warehouse)) return "error.reach";
+                    InventoryStack stock = InventoryLayout.At(player, action.value);
+                    if (stock == null || stock.cell >= InventoryLayout.BackpackSize) return "error.stock";
+                    if (!stock.coating.Empty) return "error.packCoating";
+                    AddCrate(stock.item, stock.count, 0, formula: stock.formula);
+                    InventoryLayout.Consume(player, stock, stock.count);
+                    break;
                 case ActionKind.ExpandBelt:
                     if (!At(player, Site.Supplier)) return "error.reach";
                     if (player.quickSlots >= InventoryLayout.HotbarSize) return "error.capacity";

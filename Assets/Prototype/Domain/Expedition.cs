@@ -168,8 +168,8 @@ namespace DungeonsNShops
             }
 
             if (nearest == null) return;
-            int damage = player.Main < 0 ? 7 : Mathf.Max(7, Catalog.Get(player.Main).Damage);
-            var weapon = player.Quick(player.selected);
+            var weapon = player.Weapon;
+            int damage = weapon == null ? 7 : Catalog.Get(weapon.item).Damage;
             var coating = weapon?.coating ?? default;
             if (weapon != null) weapon.coating = default;
             float factor = nearest.ward > 0 ? 1 - Mathf.Clamp(nearest.armorPower, -80, 80) / 100f : 1;

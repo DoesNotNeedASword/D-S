@@ -116,6 +116,10 @@ namespace DungeonsNShops
                     runtime.Command(ActionKind.DropCrate);
                     Check(runtime.State.dropped.Count == 1 && !runtime.LocalPlayer.HoldingCrate, "throw frees both hands");
                     InventoryLayout.Add(runtime.LocalPlayer, (int)Item.Herb, 2);
+                    InventoryLayout.Add(runtime.LocalPlayer, (int)Item.Blade, 1);
+                    InventoryLayout.Add(runtime.LocalPlayer, (int)Item.Coat, 1);
+                    InventoryLayout.Add(runtime.LocalPlayer, (int)Item.Ore, 3);
+                    InventoryLayout.Add(runtime.LocalPlayer, (int)Item.Brew, 1, formula: new PotionEffects { health = 3, armor = 12 });
                     simulatedInput.aim = AimStation(runtime.LocalPlayer, Site.Bench);
                     simulatedInput.next = Bind.Interact;
                     stage++;
@@ -241,12 +245,12 @@ namespace DungeonsNShops
                     InventoryCell[] cells = UnityEngine.Object.FindObjectsByType<InventoryCell>();
                     InventoryCell shortcut = cells.First(c => c.Index == InventoryLayout.HotbarStart + 3);
                     if (shortcut.Item < 0) return;
-                    InventoryCell destination = cells.First(c => c.Index == 6);
+                    InventoryCell destination = cells.First(c => c.Index == 30);
                     destination.OnDrop(new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current)
                     {
                         pointerDrag = shortcut.gameObject
                     });
-                    Check(runtime.LocalPlayer.Quick(3) == null && InventoryLayout.At(runtime.LocalPlayer, 15)?.item == (int)Item.Trap,
+                    Check(runtime.LocalPlayer.Quick(3) == null && InventoryLayout.At(runtime.LocalPlayer, 39)?.item == (int)Item.Trap,
                         "hover key assigns and drop back clears shortcut");
                     FindButton("panel.close").onClick.Invoke();
                     PlayerState player = runtime.LocalPlayer;
@@ -643,6 +647,53 @@ namespace DungeonsNShops
             Do(a, ActionKind.ExpandBelt);
             WorldState layoutSave = WorldSave.Decode(JsonUtility.ToJson(world.State));
             Check(layoutSave.players[0].quickSlots == 5 && world.State.money == 100, "purchased belt persists");
+
+            // Migrating one old bag must not duplicate an item's former armor or shortcut references.
+            const string oldPlayer = "{\"version\":4,\"day\":2,\"nextId\":9,\"market\":[14,6,24,18,25,12,42,10,36,24,16,21,19,26]," +
+                "\"shelf\":{\"stock\":[]},\"warehouse\":[],\"players\":[{\"id\":\"old\",\"selected\":2,\"offhand\":3," +
+                "\"bag\":[1,0,1,1,1,0,0,0,0,0,0,0,0,0],\"haul\":[0,0,0,0,0,0,0,2],\"hotbar\":[0,-1,2],\"equipment\":[-1,-1,4,-1]}]}";
+            var migrant = WorldSave.Decode(oldPlayer).players.Single();
+            Check(migrant.Count((int)Item.Ore) == 2 && migrant.Count((int)Item.Blade) == 1 && migrant.HasShield && migrant.HasCoat,
+                "legacy equipment, mapped shortcuts and haul migrate into real stacks");
+            var packed = new PlayerState();
+            for (int i = 0; i < InventoryLayout.BackpackSize; i++)
+                Check(InventoryLayout.Add(packed, (int)Item.Ore, 8), "fill the grid");
+            InventoryLayout.Consume(packed, packed.inventory[0], 1);
+            Check(!InventoryLayout.Add(packed, (int)Item.Ore, 2, true) && packed.inventory[0].count == 7 &&
+                packed.inventory[0].unsecured == 0, "failed pickup rolls back partial merge");
+            Go(a, Site.Warehouse);
+            InventoryLayout.Add(a, (int)Item.Brew, 1, formula: mixed);
+            var merchandise = a.inventory.Find(s => s.item == (int)Item.Brew);
+            Do(a, ActionKind.PackStock, merchandise.cell);
+            var box = world.State.warehouse.Find(c => c.formula.Equals(mixed));
+            Check(a.Count((int)Item.Brew) == 0 && box != null, "pack recovered items for sale");
+            world.ReceiveMove(a.id, Aim(a, ShopTargets.CratePosition(box.rackSlot),
+                new Vector3(-7, 0, ShopTargets.CratePosition(box.rackSlot).z)));
+            Do(a, ActionKind.CarryCrate, box.id);
+            var bladeCell = a.Quick(0).cell;
+            Do(a, ActionKind.MoveInventory, bladeCell, 1);
+            Check(a.Quick(0)?.cell == bladeCell && a.HoldingCrate, "cargo locks equipment");
+            world.ReceiveMove(a.id, AimStation(a, Site.Shelf));
+            int used = world.State.shelf.Used;
+            Do(a, ActionKind.Stock, box.id, 1);
+            var line = world.State.shelf.stock.Single(s => s.formula.Equals(mixed));
+            var point = ShopTargets.Product(used, 1).center;
+            var aim = Aim(a, point, point + new Vector3(0, -point.y, -1.35f));
+            var focus = ShopTargets.Find(world.State, a.position, aim.yaw, aim.pitch, false);
+            Check(focus.Site == Site.Shelf && focus.Index == 1 && focus.Id == line.Key, "aim resolves the exact displayed blend");
+            world.ReceiveMove(a.id, AimStation(a, Site.Bin));
+            Do(a, ActionKind.DiscardCrate, box.id);
+            Go(a, Site.Shelf);
+            Do(a, ActionKind.Retrieve, line.Key);
+            Check(line.count == 0 && world.State.warehouse.Exists(c => c.count == 1 && c.formula.Equals(mixed)), "shelf retrieval preserves formula");
+            InventoryLayout.Add(a, (int)Item.Brew, 1, formula: mixed);
+            var drink = a.inventory.Find(s => s.item == (int)Item.Brew);
+            Do(a, ActionKind.MoveInventory, drink.cell, InventoryLayout.HotbarStart + 3);
+            a.hp = 49;
+            a.ep = 22;
+            Do(a, ActionKind.Select, 3);
+            Check(a.hp == 52 && a.ep == 32 && a.Quick(3) == null, "one key drinks all independent effects");
+
         }
 
         private static WorldSave TestSave() => new(Guid.NewGuid().ToString("N"),

@@ -18,7 +18,7 @@ namespace DungeonsNShops
     {
         Stock, TakeCrate, Retrieve, Price, Open, Sell, Close, Order, Loan, Repay,
         BeginCraft, CraftZone, Stir, FinishCraft, CancelCraft, Enter, Exit, Sleep, Ready, Select,
-        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient, ExpandBelt, DropCrate, DiscardCrate, CoatWeapon
+        Offhand, Use, Strike, Loot, Decor, CarryCrate, PlaceCrate, SelectCrate, MoveInventory, GrindIngredient, AddIngredient, ExpandBelt, DropCrate, DiscardCrate, CoatWeapon, PackStock
     }
 
     public readonly struct ItemDefinition
@@ -108,6 +108,8 @@ namespace DungeonsNShops
             return count;
         }
         public int Main => HoldingCrate ? -1 : Quick(selected)?.item ?? -1;
+        public InventoryStack Weapon => selected == 1 && Quick(1) is { } secondary && Catalog.Get(secondary.item).Damage > 0
+            ? secondary : Quick(0);
         public int Offhand => Quick(1)?.item ?? -1;
         public bool HasShield => !HoldingCrate && Offhand == (int)Item.Shield;
         public bool HasCoat => inventory.Exists(s => s.cell == InventoryLayout.ArmorStart + (int)ArmorSlot.Torso);
